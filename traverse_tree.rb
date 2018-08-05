@@ -15,13 +15,9 @@ class TraverseTree < Graphics::Simulation
 
     @keys = []
     add = lambda do |key_id, slug, desc, order|
-      keydef = [slug, desc, :white]
+      keydef = [slug, desc, order, :white]
       @keys << keydef
-      add_key_handler(key_id) do
-        @keys.each { |kd| kd[-1] = :white }
-        keydef[-1] = :green
-        set_traversal order
-      end
+      add_key_handler(key_id) { set_traversal order }
     end
     add['K1', '1', "Pre-order",  :pre]
     add['K2', '2', "In-order",   :in]
@@ -45,6 +41,7 @@ class TraverseTree < Graphics::Simulation
   end
 
   def set_traversal(order)
+    @keys.each { |keydef| keydef[-1] = keydef[-2] == order ? :green : :white }
     redraw
     @traverser = Traverser.new(
       canvas: self,
@@ -68,7 +65,7 @@ class TraverseTree < Graphics::Simulation
       end
     end
     display["Keys", true, :white]
-    @keys.map { |key, desc, color| display["#{key}: #{desc}", false, color] }
+    @keys.map { |key, desc, _, color| display["#{key}: #{desc}", false, color] }
     display["q: quit", false, :white]
   end
 
