@@ -8,21 +8,31 @@ class DrawTreeTest < Graphics::Simulation
   end
 
   def draw(n)
-    draw_node 1, 1, @tree
+    draw_tree 1, 1, @tree
   end
 
-  def draw_node(col, row, tree)
+  def draw_tree(col, row, tree)
     x, y = center_for col-1, row-1
-    circle x, y, @radius, :white
-
     content, left, right = tree
-    centered_text content, x, y, :white
+
+    circle x, y, @radius, :white
+    centered_text content.to_s, x, y, :white
+
     if left
-      draw_node col*2-1, row+1, left
+      childx, childy = draw_tree col*2-1, row+1, left
+      connect_nodes x, y, childx, childy, :white
     end
+
     if right
-      draw_node col*2,   row+1, right
+      childx, childy = draw_tree col*2,   row+1, right
+      connect_nodes x, y, childx, childy, :white
     end
+
+    [x, y]
+  end
+
+  def connect_nodes(x1, y1, x2, y2, c)
+    line x1, y1, x2, y2, c
   end
 
   def center_for(col, row)
@@ -35,8 +45,7 @@ class DrawTreeTest < Graphics::Simulation
     [x, y]
   end
 
-  def centered_text(content, x, y, c)
-    str      = content.to_s
+  def centered_text(str, x, y, c)
     rendered = font.render screen, str, color[c]
     text str, x-rendered.w/2, y-rendered.h/2, c
   end
