@@ -32,7 +32,15 @@ class DrawTreeTest < Graphics::Simulation
   end
 
   def connect_nodes(x1, y1, x2, y2, c)
-    line x1, y1, x2, y2, c
+    ∆x = x2-x1
+    ∆y = y2-y1
+    h  = Math.sqrt ∆x**2 + ∆y**2
+
+    rh = @radius / h
+    rx = rh*∆x
+    ry = rh*∆y
+
+    line x1+rx, y1+ry, x2-rx, y2-ry, c
   end
 
   def center_for(col, row)
