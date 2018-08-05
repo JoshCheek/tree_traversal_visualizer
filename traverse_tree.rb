@@ -1,6 +1,6 @@
 require 'graphics'
 
-class DrawTreeTest < Graphics::Simulation
+class TraverseTree < Graphics::Simulation
   def initialize(tree, radius, w, h)
     super w, h, 31
     @tree   = tree
@@ -128,4 +128,4 @@ tree =
       [:+, 5, 6],
       [:+, 7, 8]]]
 
-DrawTreeTest.new(tree, 30, 1000, 600).run
+TraverseTree.new(tree, 30, 1000, 600).run
