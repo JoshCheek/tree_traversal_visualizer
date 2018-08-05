@@ -7,25 +7,55 @@ class DrawTreeTest < Graphics::Simulation
     @radius = radius
     register_color :leaf, 0x22, 0x66, 0x11, 0x00
     register_color :node, 0x88, 0x44, 0x11, 0x00
+    @node_font       = find_font "Menlo", 32
+    @annotation_font = find_font "Menlo", 10
   end
 
   def draw(n)
-    draw_tree 1, 1, @tree
+    draw_tree @tree
+    traverse_tree(@tree).each_with_index do |(x, y, position), i|
+      f   = @annotation_font
+      c   = :white
+      str = "#{i}: #{position}"
+      strw, strh = text_size str, f
+      offset = @radius+10
+      case position
+      when :pre
+        text str, x-offset-strw, y-strh/2, c, f
+      when :in
+        text str, x-strw/2, y-offset-strh, c, f
+      when :post
+        text str, x+offset, y-strh/2, c, f
+      else raise "wat: #{position.inspect}"
+      end
+    end
   end
 
-  def draw_tree(col, row, tree)
+  def traverse_tree(tree, col=1, row=1, &block)
+    return to_enum(__method__, tree, col, row) unless block
+    x, y = center_for col-1, row-1
+    content, left, right = tree
+
+    block.call x, y, :pre
+    traverse_tree left,  col*2-1, row+1, &block if left
+    block.call x, y, :in
+    traverse_tree right, col*2,   row+1, &block if right
+    block.call x, y, :post
+  end
+
+  def draw_tree(tree, col=1, row=1)
     x, y = center_for col-1, row-1
     content, left, right = tree
 
     draw_node content, x, y, @radius, leaf?(tree)
 
     if left
-      childx, childy = draw_tree col*2-1, row+1, left
+      childx, childy = draw_tree left, col*2-1, row+1
       connect_nodes x, y, childx, childy, :white
     end
 
     if right
-      childx, childy = draw_tree col*2,   row+1, right
+      childx, childy = draw_tree right, col*2, row+1
       connect_nodes x, y, childx, childy, :white
     end
 
@@ -39,7 +69,7 @@ class DrawTreeTest < Graphics::Simulation
     # circle x, y, r,   detail_color
     # circle x, y, r+1, detail_color
     # circle x, y, r+2, detail_color
-    centered_text content.to_s, x, y, detail_color
+    text_centered content.to_s, x, y, detail_color, @node_font
   end
 
   def connect_nodes(x1, y1, x2, y2, c)
@@ -64,9 +94,23 @@ class DrawTreeTest < Graphics::Simulation
     [x, y]
   end
 
-  def centered_text(str, x, y, c)
-    rendered = font.render screen, str, color[c]
-    text str, x-rendered.w/2, y-rendered.h/2, c
+  def text_leftj(str, x, y, c, font)
+    text str, x, y, c, font
+  end
+
+  def text_rightj(str, x, y, c, font)
+    strw, strh = text_size str, font
+    text str, x-strw, y-strh, c, font
+  end
+
+  def text_centered(str, x, y, c, font)
+    strw, strh = text_size str, font
+    text str, x-strw/2, y-strh/2, c, font
+  end
+
+  def text_size(str, font)
+    rendered = font.render screen, str, color[:white] # color is irrelevant here
+    return rendered.w, rendered.h
   end
 
   def leaf?(tree)
