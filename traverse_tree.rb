@@ -3,12 +3,24 @@ require 'graphics'
 class TraverseTree < Graphics::Simulation
   def initialize(tree, radius, w, h)
     super w, h, 31
-    @tree   = tree
-    @radius = radius
-    register_color :leaf, 0x22, 0x66, 0x11, 0x00
-    register_color :node, 0x88, 0x44, 0x11, 0x00
+
+    @tree            = tree
+    @radius          = radius
     @node_font       = find_font "Menlo", 32
     @annotation_font = find_font "Menlo", 10
+
+    register_color :leaf, 0x22, 0x66, 0x11, 0x00
+    register_color :node, 0x88, 0x44, 0x11, 0x00
+
+    @keys = []
+    add_key = lambda do |id, slug, name, &handler|
+      @keys << [slug, name]
+      add_key_handler id, &handler
+    end
+
+    add_key.call('K1', '1', "Pre-order Traversal")  { set_traversal :pre }
+    add_key.call('K2', '2', "In-order Traversal")   { set_traversal :in }
+    add_key.call('K2', '3', "Post-order Traversal") { set_traversal :post }
   end
 
   def draw(n)
