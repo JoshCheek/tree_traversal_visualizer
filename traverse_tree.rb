@@ -69,7 +69,7 @@ class TraverseTree < Graphics::Simulation
     # circle x, y, r,   detail_color
     # circle x, y, r+1, detail_color
     # circle x, y, r+2, detail_color
-    text_centered content.to_s, x, y, detail_color, @node_font
+    center_text content.to_s, x, y, detail_color, @node_font
   end
 
   def connect_nodes(x1, y1, x2, y2, c)
@@ -94,16 +94,7 @@ class TraverseTree < Graphics::Simulation
     [x, y]
   end
 
-  def text_leftj(str, x, y, c, font)
-    text str, x, y, c, font
-  end
-
-  def text_rightj(str, x, y, c, font)
-    strw, strh = text_size str, font
-    text str, x-strw, y-strh, c, font
-  end
-
-  def text_centered(str, x, y, c, font)
+  def center_text(str, x, y, c, font)
     strw, strh = text_size str, font
     text str, x-strw/2, y-strh/2, c, font
   end
