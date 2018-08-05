@@ -10,19 +10,18 @@ class DrawTreeTest < Graphics::Simulation
     draw_pins 1, 1, @tree
   end
 
-  MARGIN     = 50
-  RADIUS     = 30
-  ROW_HEIGHT = 50
-  COL_WIDTH  = 50
+  RADIUS      = 30
+  ROW_HEIGHT  = 50
+  COL_WIDTH   = 50
   def draw_pins(col, row, tree)
-    center = [
-           MARGIN + COL_WIDTH*col,
-      h - (MARGIN + ROW_HEIGHT*row),
-    ]
+    center = [2*RADIUS*col, h-(2*RADIUS*row)]
     circle *center, RADIUS, :white
 
-    content, left, right = tree
+    content, left, right = tree # will either destructure or fill left and right in with nil
+    content = content.to_s
     centered_text content, *center, :white
+    left  && draw_pins(col*2-1, row+1, left)
+    right && draw_pins(col*2,   row+1, right)
   end
 
   def centered_text(str, x, y, c)
@@ -32,9 +31,9 @@ class DrawTreeTest < Graphics::Simulation
 end
 
 tree = [
-  ?*,
-  [?+, 1, 5],
-  [?-, 10, [?+, 3, 4]],
+  :*,
+  [:+, 1, 5],
+  [:-, 10, [:+, 3, 4]],
 ]
 
 DrawTreeTest.new(tree).run
