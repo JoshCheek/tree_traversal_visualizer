@@ -26,14 +26,15 @@ class TraverseTree < Graphics::Simulation
     add['K1', '1', "Pre-order",  :pre]
     add['K2', '2', "In-order",   :in]
     add['K3', '3', "Post-order", :post]
+    set_traversal :pre
   end
 
   def draw(n)
     if n == 1
       redraw
     else
-      @traverser&.call
-      sleep 0.01
+      @traverser&.step
+      sleep 0.1
     end
   end
 
@@ -45,14 +46,20 @@ class TraverseTree < Graphics::Simulation
 
   def set_traversal(order)
     redraw
-    # @traverser = Traverser.new order: order, path: build_traversal(@tree)
+    @traverser = Traverser.new(
+      canvas: self,
+      order:  order,
+      path:   build_traversal(@tree),
+      font:   @instructions_font,
+      radius: @radius,
+    )
   end
 
   def display_keys
     font    = @instructions_font
     row_h   = font.height+5
     x, y    = 10, h-10
-    display = lambda do |str, underline, color=:white|
+    display = lambda do |str, underline, color|
       y -= row_h
       text str, x, y, color, font
       if underline
@@ -60,8 +67,9 @@ class TraverseTree < Graphics::Simulation
         y -= 5
       end
     end
-    display["Keys", true]
+    display["Keys", true, :white]
     @keys.map { |key, desc, color| display["#{key}: #{desc}", false, color] }
+    display["q: quit", false, :white]
   end
 
   def build_traversal(tree)
@@ -172,11 +180,39 @@ class TraverseTree < Graphics::Simulation
 end
 
 class Traverser
-  attr_reader :order, :path
-  def initialize(order, path)
-    @order, @path = order, path
+  attr_reader :canvas, :order, :path, :font, :radius
+  def initialize(canvas:, order:, path:, font:, radius:)
+    @canvas, @order, @path, @font, @radius = canvas, order, path, font, radius
+    @i = 0
   end
-    # {:position=>:pre, :content=>:*, :x=>500, :y=>490},
+
+  def step
+    nodenum = 0
+    offset  = radius+15
+    px = py = nil
+
+    path.take(@i).each do |crnt|
+      nodenum   += 1 if order == crnt[:position]
+      # crnt = {:position=>:pre, :content=>:*, :x=>500, :y=>490},
+      str        = nodenum.to_s
+      # strw, strh = canvas.text_size str, font
+      cx,   cy   = crnt[:x], crnt[:y]
+      case crnt[:position]
+      when :pre
+        cx -= offset
+      when :in
+        cy -= offset
+      when :post
+        cx += offset
+      else raise "wat: #{torder.inspect}"
+      end
+      # text str, strx, stry, :white, font
+
+      canvas.line px, py, cx, cy, :green if px
+      px, py = cx, cy
+    end
+    @i += 1
+  end
 end
 
 tree =
