@@ -1,10 +1,10 @@
 require 'graphics'
 
 class DrawTreeTest < Graphics::Simulation
-  def initialize(tree)
-    super 800, 600, 31
-    @tree       = tree
-    @radius     = 30
+  def initialize(tree, radius, w, h)
+    super w, h, 31
+    @tree   = tree
+    @radius = radius
   end
 
   def draw(n)
@@ -62,10 +62,10 @@ end
 tree =
   [:*,
     [:+,
-      [:/, 9, 3],
-      [:-, 7, 8]],
+      [:/, 1, 2],
+      [:-, 3, 4]],
     [:-,
-      [:-, [:-, nil, 9], nil],
-      [:+, 3, 4]]]
+      [:+, 5, 6],
+      [:+, 7, 8]]]
 
-DrawTreeTest.new(tree).run
+DrawTreeTest.new(tree, 30, 1000, 600).run
