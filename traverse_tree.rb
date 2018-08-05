@@ -16,20 +16,17 @@ class TraverseTree < Graphics::Simulation
 
     traverse_tree(@tree).each_with_index do |(torder, tree, xy, lxy, rxy), i|
       f      = @annotation_font
-      c      = :white
       str    = "#{i}: #{torder}"
       offset = @radius+10
       strw, strh = text_size str, f
       x,    y    = xy
       case torder
-      when :pre
-        text str, x-offset-strw, y-strh/2, c, f
-      when :in
-        text str, x-strw/2, y-offset-strh, c, f
-      when :post
-        text str, x+offset, y-strh/2, c, f
+      when :pre  then strx, stry = x-offset-strw, y-strh/2
+      when :in   then strx, stry = x-strw/2,      y-offset-strh
+      when :post then strx, stry = x+offset,      y-strh/2
       else raise "wat: #{torder.inspect}"
       end
+      text str, strx, stry, :white, f
     end
   end
 
