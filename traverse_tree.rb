@@ -29,9 +29,10 @@ class TraverseTree < Graphics::Simulation
   end
 
   def draw_traversal(tree)
+    prevxy = nil
     traverse_tree(tree).each_with_index do |(torder, _node, xy, *), i|
       f      = @annotation_font
-      str    = "#{i}: #{torder}"
+      str    = i.to_s
       offset = @radius+10
       strw, strh = text_size str, f
       x,    y    = xy
@@ -42,6 +43,10 @@ class TraverseTree < Graphics::Simulation
       else raise "wat: #{torder.inspect}"
       end
       text str, strx, stry, :white, f
+
+      strxy = [strx, stry]
+      prevxy && line(*prevxy, *strxy, :green)
+      prevxy = strxy
     end
   end
 
