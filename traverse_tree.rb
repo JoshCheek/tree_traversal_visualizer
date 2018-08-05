@@ -12,7 +12,7 @@ class TraverseTree < Graphics::Simulation
   end
 
   def draw(n)
-    draw_tree @tree
+    draw_tree      @tree
     draw_traversal @tree
   end
 
@@ -37,18 +37,9 @@ class TraverseTree < Graphics::Simulation
     traverse_tree tree do |torder, node, xy, lxy, rxy|
       next unless torder == :pre
       content, left, right = node
-
       draw_node content, *xy, @radius, leaf?(node)
-
-      if left
-        childx, childy = lxy
-        connect_nodes *xy, childx, childy, :white
-      end
-
-      if right
-        childx, childy = rxy
-        connect_nodes *xy, childx, childy, :white
-      end
+      connect_nodes *xy, *lxy, :white if left
+      connect_nodes *xy, *rxy, :white if right
     end
   end
 
@@ -73,22 +64,20 @@ class TraverseTree < Graphics::Simulation
   end
 
   def draw_node(content, x, y, r, is_leaf)
-    fill_color = (is_leaf ? :leaf : :node)
-    circle x, y, r, fill_color, true
+    circle x, y, r, fill_color(is_leaf), true
+    center_text content.to_s, x, y, :white, @node_font
+  end
 
-    detail_color = :white
-    center_text content.to_s, x, y, detail_color, @node_font
+  def fill_color(is_leaf)
+    is_leaf ? :leaf : :node
   end
 
   def connect_nodes(x1, y1, x2, y2, c)
     ∆x = x2-x1
     ∆y = y2-y1
     h  = Math.sqrt ∆x**2 + ∆y**2
-
-    rh = @radius / h
-    rx = rh*∆x
-    ry = rh*∆y
-
+    rx = @radius * ∆x / h
+    ry = @radius * ∆y / h
     line x1+rx, y1+ry, x2-rx, y2-ry, c
   end
 
@@ -103,8 +92,8 @@ class TraverseTree < Graphics::Simulation
   end
 
   def center_text(str, x, y, c, font)
-    strw, strh = text_size str, font
-    text str, x-strw/2, y-strh/2, c, font
+    w, h = text_size str, font
+    text str, x-w/2, y-h/2, c, font
   end
 
   def text_size(str, font)
