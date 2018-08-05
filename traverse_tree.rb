@@ -30,7 +30,7 @@ class TraverseTree < Graphics::Simulation
       redraw
     else
       @traverser&.step
-      sleep 0.1
+      sleep 0.05
     end
   end
 
@@ -184,31 +184,32 @@ class Traverser
   end
 
   def step
+    @i += 1
+
     nodenum = 0
     offset  = radius+15
     px = py = nil
 
-    path.take(@i).each do |crnt|
-      nodenum   += 1 if order == crnt[:position]
-      # crnt = {:position=>:pre, :content=>:*, :x=>500, :y=>490},
-      str        = nodenum.to_s
-      # strw, strh = canvas.text_size str, font
-      cx,   cy   = crnt[:x], crnt[:y]
+    path.take(@i).each do |crnt| # {:position=>:pre, :content=>:*, :x=>500, :y=>490},
+      cx, cy = crnt[:x], crnt[:y]
       case crnt[:position]
-      when :pre
-        cx -= offset
-      when :in
-        cy -= offset
-      when :post
-        cx += offset
+      when :pre  then cx -= offset
+      when :in   then cy -= offset
+      when :post then cx += offset
       else raise "wat: #{torder.inspect}"
       end
-      # text str, strx, stry, :white, font
-
       canvas.line px, py, cx, cy, :green if px
       px, py = cx, cy
+
+      str        = nodenum.to_s
+      do_visit   = (order == crnt[:position])
+      nodenum   += 1 if do_visit
+      if do_visit && :pre == crnt[:position]
+        strw, strh = canvas.text_size str, font
+        canvas.text str, cx-strw, cy-strh/2, :white
+      end
+      # text str, strx, stry, :white, font
     end
-    @i += 1
   end
 end
 
