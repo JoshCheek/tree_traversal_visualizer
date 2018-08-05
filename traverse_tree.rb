@@ -3,7 +3,6 @@ require 'graphics'
 class TraverseTree < Graphics::Simulation
   def initialize(tree, radius, w, h)
     super w, h, 31
-
     @tree              = tree
     @radius            = radius
     @node_font         = find_font "Menlo", 32
@@ -22,27 +21,21 @@ class TraverseTree < Graphics::Simulation
     add['K1', '1', "Pre-order",  :pre]
     add['K2', '2', "In-order",   :in]
     add['K3', '3', "Post-order", :post]
+
+    # just to make it faster to iterate
     set_traversal :pre
   end
 
   def draw(n)
-    if n == 1
-      redraw
-    else
-      @traverser&.step
-      sleep 0.05
-    end
-  end
-
-  def redraw
     clear
     display_keys
     draw_tree @tree
+    display_seen @traverser&.step
+    sleep 0.05
   end
 
   def set_traversal(order)
     @keys.each { |keydef| keydef[-1] = keydef[-2] == order ? :green : :white }
-    redraw
     @traverser = Traverser.new(
       canvas: self,
       order:  order,
@@ -50,6 +43,25 @@ class TraverseTree < Graphics::Simulation
       font:   @instructions_font,
       radius: @radius,
     )
+  end
+
+  def display_seen(seen)
+    font    = @instructions_font
+    x, y    = 10, 10
+    w, h    = 0,  0
+    display = lambda do |str, color|
+      text str, x, y, color, font
+      w, h = text_size str, font
+      x += w
+    end
+    display["Seen: ", :white]
+    seen.each_with_index do |content, index|
+      is_last = (index == seen.size.pred)
+      color   = :green
+      display["    ", color]
+      display[content.to_s, color]
+      circle x-w/2, y+h/2, font.height, color if is_last
+    end
   end
 
   def display_keys
@@ -189,6 +201,7 @@ class Traverser
     nodenum = 0
     offset  = radius+15
     px = py = nil
+    seen    = []
 
     path.take(@i).each do |crnt| # {:position=>:pre, :content=>:*, :x=>500, :y=>490},
       cx, cy = crnt[:x], crnt[:y]
@@ -202,6 +215,8 @@ class Traverser
       px, py = cx, cy
 
       next unless order == crnt[:position]
+
+      seen << crnt[:content]
 
       nodenum += 1
       str        = nodenum.to_s
@@ -222,6 +237,8 @@ class Traverser
       # canvas.circle cx-strw/2, cy, font.height, bgcolor, true
       canvas.text str, strx, stry, :white, font
     end
+
+    seen
   end
 end
 
