@@ -13,8 +13,11 @@ class TraverseTree < Graphics::Simulation
 
   def draw(n)
     draw_tree @tree
+    draw_traversal @tree
+  end
 
-    traverse_tree(@tree).each_with_index do |(torder, tree, xy, lxy, rxy), i|
+  def draw_traversal(tree)
+    traverse_tree(tree).each_with_index do |(torder, _node, xy, *), i|
       f      = @annotation_font
       str    = "#{i}: #{torder}"
       offset = @radius+10
@@ -27,6 +30,25 @@ class TraverseTree < Graphics::Simulation
       else raise "wat: #{torder.inspect}"
       end
       text str, strx, stry, :white, f
+    end
+  end
+
+  def draw_tree(tree)
+    traverse_tree tree do |torder, node, xy, lxy, rxy|
+      next unless torder == :pre
+      content, left, right = node
+
+      draw_node content, *xy, @radius, leaf?(node)
+
+      if left
+        childx, childy = lxy
+        connect_nodes *xy, childx, childy, :white
+      end
+
+      if right
+        childx, childy = rxy
+        connect_nodes *xy, childx, childy, :white
+      end
     end
   end
 
@@ -48,25 +70,6 @@ class TraverseTree < Graphics::Simulation
     block.call :in,   tree, xy, lxy, rxy
     traverse_tree right, rcol, crow, &block if right
     block.call :post, tree, xy, lxy, rxy
-  end
-
-  def draw_tree(tree, col=1, row=1)
-    x, y = center_for col-1, row-1
-    content, left, right = tree
-
-    draw_node content, x, y, @radius, leaf?(tree)
-
-    if left
-      childx, childy = draw_tree left, col*2-1, row+1
-      connect_nodes x, y, childx, childy, :white
-    end
-
-    if right
-      childx, childy = draw_tree right, col*2, row+1
-      connect_nodes x, y, childx, childy, :white
-    end
-
-    [x, y]
   end
 
   def draw_node(content, x, y, r, is_leaf)
