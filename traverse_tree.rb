@@ -13,34 +13,44 @@ class TraverseTree < Graphics::Simulation
 
   def draw(n)
     draw_tree @tree
-    traverse_tree(@tree).each_with_index do |(x, y, position), i|
-      f   = @annotation_font
-      c   = :white
-      str = "#{i}: #{position}"
-      strw, strh = text_size str, f
+
+    traverse_tree(@tree).each_with_index do |(torder, tree, xy, lxy, rxy), i|
+      f      = @annotation_font
+      c      = :white
+      str    = "#{i}: #{torder}"
       offset = @radius+10
-      case position
+      strw, strh = text_size str, f
+      x,    y    = xy
+      case torder
       when :pre
         text str, x-offset-strw, y-strh/2, c, f
       when :in
         text str, x-strw/2, y-offset-strh, c, f
       when :post
         text str, x+offset, y-strh/2, c, f
-      else raise "wat: #{position.inspect}"
+      else raise "wat: #{torder.inspect}"
       end
     end
   end
 
-  def traverse_tree(tree, col=1, row=1, &block)
+  def traverse_tree(tree, col=0, row=0, &block)
     return to_enum(__method__, tree, col, row) unless block
-    x, y = center_for col-1, row-1
-    content, left, right = tree
+    lcol = col*2   # left  child column
+    rcol = col*2+1 # right child column
+    crow = row+1   # child row
 
-    block.call x, y, :pre
-    traverse_tree left,  col*2-1, row+1, &block if left
-    block.call x, y, :in
-    traverse_tree right, col*2,   row+1, &block if right
-    block.call x, y, :post
+    # calculate child locations so we can pass to block before traversing children
+    content, left, right = tree
+    xy  = center_for  col,  row
+    lxy = center_for lcol, crow if left
+    rxy = center_for rcol, crow if right
+
+    # the actual traversal
+    block.call :pre,  tree, xy, lxy, rxy
+    traverse_tree left,  lcol, crow, &block if left
+    block.call :in,   tree, xy, lxy, rxy
+    traverse_tree right, rcol, crow, &block if right
+    block.call :post, tree, xy, lxy, rxy
   end
 
   def draw_tree(tree, col=1, row=1)
@@ -63,12 +73,10 @@ class TraverseTree < Graphics::Simulation
   end
 
   def draw_node(content, x, y, r, is_leaf)
-    detail_color = :white
-    fill_color   = (is_leaf ? :leaf : :node)
+    fill_color = (is_leaf ? :leaf : :node)
     circle x, y, r, fill_color, true
-    # circle x, y, r,   detail_color
-    # circle x, y, r+1, detail_color
-    # circle x, y, r+2, detail_color
+
+    detail_color = :white
     center_text content.to_s, x, y, detail_color, @node_font
   end
 
