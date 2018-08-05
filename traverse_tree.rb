@@ -14,37 +14,67 @@ class TraverseTree < Graphics::Simulation
     register_color :node, 0x88, 0x44, 0x11, 0x00
 
     @keys = []
-    add_key = lambda do |id, slug, desc, &handler|
-      @keys << [slug, desc]
-      add_key_handler id, &handler
+    add = lambda do |kid, kslug, tdesc, tid|
+      get_color = -> { tid == @traversal_order ? :cyan : :white }
+      @keys << [kslug, tdesc, get_color]
+      add_key_handler(kid) { set_traversal :tid }
     end
+    add['K1', '1', "Pre-order",  :pre]
+    add['K2', '2', "In-order",   :in]
+    add['K3', '3', "Post-order", :post]
 
-    add_key.call('K1', '1', "Pre-order Traversal")  { set_traversal :pre }
-    add_key.call('K2', '2', "In-order Traversal")   { set_traversal :in }
-    add_key.call('K2', '3', "Post-order Traversal") { set_traversal :post }
-
-    @state = :instructions
+    @traversal_points = build_traversal @tree
+    @traversal_index  = 0
   end
 
   def draw(n)
     if n == 1
-      display_keys
-      draw_tree @tree
-      case @state
-      when :instructions
-      when :traverse
-      end
+      redraw
+    else
+      sleep 0.01
     end
-    # draw_traversal @tree
+    # @traversal_points.take(@traversal_index)
+    # {:position=>:pre, :content=>:*, :x=>500, :y=>490},
+    # @traversal_points
+  end
+
+  def redraw
+    display_keys
+    draw_tree @tree
+  end
+
+  def set_traversal(order)
+    return if @traversal_order == order
+    @traversal_order = order
+    redraw
   end
 
   def display_keys
-    font   = @instructions_font
-    row_h  = font.height+5
-    margin = 10
-    key_descs  = @keys.map { |key, desc| "#{key}: #{desc}" }
-    ["Keys", *key_descs].each.with_index 1 do |row, i|
-      text row, margin, h-margin-row_h*i, :white, font
+    font    = @instructions_font
+    row_h   = font.height+5
+    x, y    = 10, h-10
+    display = lambda do |str, underline, color=:white|
+      y -= row_h
+      text str, x, y, color, font
+      if underline
+        line x, y-5, x+100, y-5, color
+        y -= 5
+      end
+    end
+    display["Keys", true]
+    @keys.map do |key, desc, get_color|
+      display["#{key}: #{desc}", false, get_color.call]
+    end
+  end
+
+  def build_traversal(tree)
+    traverse_tree(tree).each_with_object([]) do |(torder, node, xy, *), traversal|
+      traversal << {
+        position: torder,
+        content:  node[0],
+        x:        xy[0],
+        y:        xy[1],
+      }
     end
   end
 
