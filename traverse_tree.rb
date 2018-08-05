@@ -14,39 +14,38 @@ class TraverseTree < Graphics::Simulation
     register_color :node, 0x88, 0x44, 0x11, 0x00
 
     @keys = []
-    add = lambda do |kid, kslug, tdesc, tid|
-      get_color = -> { tid == @traversal_order ? :cyan : :white }
-      @keys << [kslug, tdesc, get_color]
-      add_key_handler(kid) { set_traversal :tid }
+    add = lambda do |key_id, slug, desc, order|
+      keydef = [slug, desc, :white]
+      @keys << keydef
+      add_key_handler(key_id) do
+        @keys.each { |kd| kd[-1] = :white }
+        keydef[-1] = :green
+        set_traversal order
+      end
     end
     add['K1', '1', "Pre-order",  :pre]
     add['K2', '2', "In-order",   :in]
     add['K3', '3', "Post-order", :post]
-
-    @traversal_points = build_traversal @tree
-    @traversal_index  = 0
   end
 
   def draw(n)
     if n == 1
       redraw
     else
+      @traverser&.call
       sleep 0.01
     end
-    # @traversal_points.take(@traversal_index)
-    # {:position=>:pre, :content=>:*, :x=>500, :y=>490},
-    # @traversal_points
   end
 
   def redraw
+    clear
     display_keys
     draw_tree @tree
   end
 
   def set_traversal(order)
-    return if @traversal_order == order
-    @traversal_order = order
     redraw
+    # @traverser = Traverser.new order: order, path: build_traversal(@tree)
   end
 
   def display_keys
@@ -62,9 +61,7 @@ class TraverseTree < Graphics::Simulation
       end
     end
     display["Keys", true]
-    @keys.map do |key, desc, get_color|
-      display["#{key}: #{desc}", false, get_color.call]
-    end
+    @keys.map { |key, desc, color| display["#{key}: #{desc}", false, color] }
   end
 
   def build_traversal(tree)
@@ -172,6 +169,14 @@ class TraverseTree < Graphics::Simulation
     content, left, right = tree
     !left && !right
   end
+end
+
+class Traverser
+  attr_reader :order, :path
+  def initialize(order, path)
+    @order, @path = order, path
+  end
+    # {:position=>:pre, :content=>:*, :x=>500, :y=>490},
 end
 
 tree =
