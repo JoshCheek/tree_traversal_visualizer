@@ -4,28 +4,48 @@ class TraverseTree < Graphics::Simulation
   def initialize(tree, radius, w, h)
     super w, h, 31
 
-    @tree            = tree
-    @radius          = radius
-    @node_font       = find_font "Menlo", 32
-    @annotation_font = find_font "Menlo", 10
+    @tree              = tree
+    @radius            = radius
+    @node_font         = find_font "Menlo", 32
+    @annotation_font   = find_font "Menlo", 10
+    @instructions_font = find_font "AquaKana", 15
 
     register_color :leaf, 0x22, 0x66, 0x11, 0x00
     register_color :node, 0x88, 0x44, 0x11, 0x00
 
     @keys = []
-    add_key = lambda do |id, slug, name, &handler|
-      @keys << [slug, name]
+    add_key = lambda do |id, slug, desc, &handler|
+      @keys << [slug, desc]
       add_key_handler id, &handler
     end
 
     add_key.call('K1', '1', "Pre-order Traversal")  { set_traversal :pre }
     add_key.call('K2', '2', "In-order Traversal")   { set_traversal :in }
     add_key.call('K2', '3', "Post-order Traversal") { set_traversal :post }
+
+    @state = :instructions
   end
 
   def draw(n)
-    draw_tree      @tree
-    draw_traversal @tree
+    if n == 1
+      display_keys
+      draw_tree @tree
+      case @state
+      when :instructions
+      when :traverse
+      end
+    end
+    # draw_traversal @tree
+  end
+
+  def display_keys
+    font   = @instructions_font
+    row_h  = font.height+5
+    margin = 10
+    key_descs  = @keys.map { |key, desc| "#{key}: #{desc}" }
+    ["Keys", *key_descs].each.with_index 1 do |row, i|
+      text row, margin, h-margin-row_h*i, :white, font
+    end
   end
 
   def draw_traversal(tree)

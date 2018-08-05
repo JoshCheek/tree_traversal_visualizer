@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+basename {/System/Library/Fonts,/Library/Fonts,$HOME/Library/Fonts}/*.{ttc,ttf} \
+| ruby -lpe '$_.chomp! File.extname $_'  \
+| sort -u
