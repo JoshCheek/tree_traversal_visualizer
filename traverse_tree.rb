@@ -201,14 +201,26 @@ class Traverser
       canvas.line px, py, cx, cy, :green if px
       px, py = cx, cy
 
+      next unless order == crnt[:position]
+
+      nodenum += 1
       str        = nodenum.to_s
-      do_visit   = (order == crnt[:position])
-      nodenum   += 1 if do_visit
-      if do_visit && :pre == crnt[:position]
-        strw, strh = canvas.text_size str, font
-        canvas.text str, cx-strw, cy-strh/2, :white
+      strw, strh = canvas.text_size str, font
+      strx, stry = cx, cy
+      case order
+      when :pre
+        strx -= strw
+        stry -= strh/2
+      when :in
+        strx -= strw/2
+        stry -= strh
+      when :post
+        stry -= strh/2
+      else raise "wat: #{order.inspect}"
       end
-      # text str, strx, stry, :white, font
+
+      # canvas.circle cx-strw/2, cy, font.height, bgcolor, true
+      canvas.text str, strx, stry, :white, font
     end
   end
 end
