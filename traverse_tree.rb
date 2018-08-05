@@ -192,53 +192,60 @@ class Traverser
   attr_reader :canvas, :order, :path, :font, :radius
   def initialize(canvas:, order:, path:, font:, radius:)
     @canvas, @order, @path, @font, @radius = canvas, order, path, font, radius
-    @i = 0
+    @steps = build_steps
+    @done  = false
+  end
+
+  def done?
+    @done
   end
 
   def step
-    @i += 1
+    @steps.resume
+  end
 
+  def build_steps
     nodenum = 0
     offset  = radius+15
     px = py = nil
     seen    = []
+    Fiber.new do
+      path.each do |crnt| # {:position=>:pre, :content=>:*, :x=>500, :y=>490},
+        cx, cy = crnt[:x], crnt[:y]
+        case crnt[:position]
+        when :pre  then cx -= offset
+        when :in   then cy -= offset
+        when :post then cx += offset
+        else raise "wat: #{torder.inspect}"
+        end
+        canvas.line px, py, cx, cy, :green if px
+        px, py = cx, cy
 
-    path.take(@i).each do |crnt| # {:position=>:pre, :content=>:*, :x=>500, :y=>490},
-      cx, cy = crnt[:x], crnt[:y]
-      case crnt[:position]
-      when :pre  then cx -= offset
-      when :in   then cy -= offset
-      when :post then cx += offset
-      else raise "wat: #{torder.inspect}"
+        if order == crnt[:position]
+          seen << crnt[:content]
+          nodenum += 1
+          str        = nodenum.to_s
+          strw, strh = canvas.text_size str, font
+          strx, stry = cx, cy
+          case order
+          when :pre
+            strx -= strw
+            stry -= strh/2
+          when :in
+            strx -= strw/2
+            stry -= strh
+          when :post
+            stry -= strh/2
+          else raise "wat: #{order.inspect}"
+          end
+          # canvas.circle cx-strw/2, cy, font.height, bgcolor, true
+          canvas.text str, strx, stry, :white, font
+        end
+        Fiber.yield seen.dup
       end
-      canvas.line px, py, cx, cy, :green if px
-      px, py = cx, cy
-
-      next unless order == crnt[:position]
-
-      seen << crnt[:content]
-
-      nodenum += 1
-      str        = nodenum.to_s
-      strw, strh = canvas.text_size str, font
-      strx, stry = cx, cy
-      case order
-      when :pre
-        strx -= strw
-        stry -= strh/2
-      when :in
-        strx -= strw/2
-        stry -= strh
-      when :post
-        stry -= strh/2
-      else raise "wat: #{order.inspect}"
-      end
-
-      # canvas.circle cx-strw/2, cy, font.height, bgcolor, true
-      canvas.text str, strx, stry, :white, font
+      @done = true
+      Fiber.yield seen.dup
     end
-
-    seen
   end
 end
 
