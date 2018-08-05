@@ -5,29 +5,33 @@ class DrawTreeTest < Graphics::Simulation
     super 800, 600, 31
     @tree       = tree
     @radius     = 30
-    @row_margin = 20
-    @col_margin = 50
   end
 
   def draw(n)
-    draw_pins 1, 1, @tree
+    draw_node 1, 1, @tree
   end
 
-  def draw_pins(col, row, tree)
-    x, y = center_for col, row
+  def draw_node(col, row, tree)
+    x, y = center_for col-1, row-1
     circle x, y, @radius, :white
 
-    content, left, right = tree # will either destructure or fill left and right in with nil
+    content, left, right = tree
     centered_text content, x, y, :white
-    draw_pins col*2-1, row+1, left   if left
-    draw_pins col*2,   row+1, right  if right
+    if left
+      draw_node col*2-1, row+1, left
+    end
+    if right
+      draw_node col*2,   row+1, right
+    end
   end
 
   def center_for(col, row)
-    num_cols  = 2**(row-1)
-    col_width = (w - 2*@col_margin) / num_cols
-    x = @col_margin + (col-1) * col_width + col_width/2
-    y = h - row*(@row_margin + 2*@radius)
+    col_margin = 50
+    row_margin = 20
+    num_cols   = 2**row
+    col_width  = (w - 2*col_margin) / num_cols
+    x = col*col_width + col_width/2 + col_margin
+    y = h - (row+1)*(row_margin + 2*@radius)
     [x, y]
   end
 
