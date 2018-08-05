@@ -3,34 +3,36 @@ require 'graphics'
 class DrawTreeTest < Graphics::Simulation
   def initialize(tree)
     super 800, 600, 31
-    @tree = tree
+    @tree       = tree
+    @radius     = 30
+    @row_margin = 20
+    @col_margin = 50
   end
 
   def draw(n)
     draw_pins 1, 1, @tree
   end
 
-  RADIUS      = 30
-  ROW_HEIGHT  = 50
-  COL_WIDTH   = 50
-  ROW_MARGIN  = 20
-  PAGE_MARGIN = 50
   def draw_pins(col, row, tree)
-    num_cols     = 2**(row-1)
-    segment_size = (w - 2*PAGE_MARGIN) / num_cols
-    x = PAGE_MARGIN + (col-1) * segment_size + segment_size/2
-    y = h - row*(ROW_MARGIN + 2*RADIUS)
-
-    circle x, y, RADIUS, :white
+    x, y = center_for col, row
+    circle x, y, @radius, :white
 
     content, left, right = tree # will either destructure or fill left and right in with nil
-    content = content.to_s
     centered_text content, x, y, :white
-    left  && draw_pins(col*2-1, row+1, left)
-    right && draw_pins(col*2,   row+1, right)
+    draw_pins col*2-1, row+1, left   if left
+    draw_pins col*2,   row+1, right  if right
   end
 
-  def centered_text(str, x, y, c)
+  def center_for(col, row)
+    num_cols  = 2**(row-1)
+    col_width = (w - 2*@col_margin) / num_cols
+    x = @col_margin + (col-1) * col_width + col_width/2
+    y = h - row*(@row_margin + 2*@radius)
+    [x, y]
+  end
+
+  def centered_text(content, x, y, c)
+    str      = content.to_s
     rendered = font.render screen, str, color[c]
     text str, x-rendered.w/2, y-rendered.h/2, c
   end
@@ -40,8 +42,9 @@ tree =
   [:*,
     [:+,
       [:/, 9, 3],
-      [:*, 7, 8]],
+      [:-, 7, 8]],
     [:-,
-      9,
+      [:-, [:-, nil, 9], nil],
       [:+, 3, 4]]]
+
 DrawTreeTest.new(tree).run
