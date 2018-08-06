@@ -9,9 +9,8 @@ class Traverser2
   end
 
   def step
-    @i += 1
     path = visit_nodes(@tree, PI*0.5, PI*2.5, 0, 0).to_a
-    call path, @i
+    call path.take(@i+=1)
   end
 
   private
@@ -22,6 +21,9 @@ class Traverser2
 
   def visit_nodes(tree, entryø, exitø, col, row, &block)
     return to_enum(__method__, tree, entryø, exitø, col, row) unless block
+    segment_size  = 10
+    trace_readius = 2 * radius
+
     preø  = PI
     inø   = 3*PI/2
     postø = 2*PI
@@ -39,11 +41,11 @@ class Traverser2
     # the actual tracing traversal
     block.call :enter, tree, xy, entryø, exitø
 
-    node_arc *xy, entryø, preø, 2*radius, 3  do |x1, y1, x2, y2|
+    node_arc *xy, entryø, preø, trace_readius, segment_size  do |x1, y1, x2, y2|
       block.call :line, [x1, y1, x2, y2]
     end
 
-    block.call :pre,  tree, xy, lxy, rxy
+    block.call :pre, [tree, xy, lxy, rxy]
 
 #   for each line segment from 90 to lcstart
 #     emit :line
@@ -82,9 +84,9 @@ class Traverser2
     idk2ø = PI/2 - 0.5
 
     visit_nodes left,  idk1ø, idk2ø, lcol, crow, &block if left
-    # block.call :in,   tree, xy, lxy, rxy
+    # block.call :in,   [tree, xy, lxy, rxy]
     visit_nodes right, idk1ø, idk2ø, rcol, crow, &block if right
-    # block.call :post, tree, xy, lxy, rxy
+    # block.call :post, [tree, xy, lxy, rxy]
   end
 
   def node_pos(col, row)
@@ -97,23 +99,46 @@ class Traverser2
     [x, y]
   end
 
-  def call(path, i)
-    path.take(i).each do |type, vars|
+  def call(path)
+    line_offset   = radius+10
+    marker_offset = radius-3
+    deferred      = []
+    seen          = []
+    path.each do |type, vars|
       case type
       when :pre
+        tree, xy, * = vars
+        if type == order
+          seen << tree
+          str        = seen.size.to_s
+          strw, strh = canvas.text_size str, font
+          strx, stry = xy
+
+          strx -= marker_offset
+          strx -= strw
+          stry -= strh/2
+
+          deferred << lambda do
+            circlex = strx+strw/2
+            circley = stry+strh/2
+            circler = font.height*0.65
+            canvas.circle circlex, circley, circler, :red, true
+            # canvas.circle circlex, circley, circler, :white, false
+            canvas.text str, strx, stry, :white, font
+          end
+        end
       when :in
+        tree, xy, * = vars
       when :post
+        tree, xy, * = vars
       when :enter
       when :line
         canvas.line *vars, :yellow
       else raise "wat: #{type.inspect}"
       end
     end
+    deferred.each &:call
     []
-  end
-
-  def segment_size
-    2 # px
   end
 
   def node_arc(x, y, startø, stopø, r, segment_size, &block)
