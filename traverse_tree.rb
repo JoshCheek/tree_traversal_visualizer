@@ -190,14 +190,17 @@ class Traverser
   end
 
   def call(i)
-    offset  = radius+15
-    px = py = nil
-    seen    = []
-    path.take(i).each do |crnt_order, tree, (cx, cy), *|
+    line_offset   = radius+10
+    marker_offset = radius-3
+    px = py       = nil
+    seen          = []
+    deferred      = []
+    path.take(i).each do |crnt_order, tree, xy, *|
+      cx, cy = xy
       case crnt_order
-      when :pre  then cx -= offset
-      when :in   then cy -= offset
-      when :post then cx += offset
+      when :pre  then cx -= line_offset
+      when :in   then cy -= line_offset
+      when :post then cx += line_offset
       else raise "wat: #{crnt_order.inspect}"
       end
       canvas.line px, py, cx, cy, :green if px
@@ -207,21 +210,31 @@ class Traverser
       seen << tree
       str        = seen.size.to_s
       strw, strh = canvas.text_size str, font
-      strx, stry = cx, cy
+      strx, stry = xy
       case order
       when :pre
+        strx -= marker_offset
         strx -= strw
         stry -= strh/2
       when :in
+        stry -= marker_offset
         strx -= strw/2
         stry -= strh
       when :post
+        strx += marker_offset
         stry -= strh/2
       else raise "wat: #{order.inspect}"
       end
-      # canvas.circle cx-strw/2, cy, font.height, bgcolor, true
-      canvas.text str, strx, stry, :white, font
+      deferred << lambda do
+        circlex = strx+strw/2
+        circley = stry+strh/2
+        circler = font.height*0.7
+        canvas.circle circlex, circley, circler, :red, true
+        canvas.circle circlex, circley, circler, :white, false
+        canvas.text str, strx, stry, :white, font
+      end
     end
+    deferred.each &:call
     seen.dup
   end
 end
