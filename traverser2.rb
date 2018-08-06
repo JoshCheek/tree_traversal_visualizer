@@ -43,53 +43,52 @@ class Traverser2
     inø      = 3*PI/2
     postø    = 2*PI
 
+
     # left child angles
     lc1x = lc1y = :calculated_below
     lc2x = lc2y = :calculated_below
     lc3x = lc3y = :calculated_below
     lc4x = lc4y = :calculated_below
 
-    lc1ø     = :calculated_below
-    lc2ø     = :calculated_below
-    lc3ø     = :calculated_below
-    lc4ø     = :calculated_below
+    lc1ø = :calculated_below
+    lc2ø = :calculated_below
+    lc3ø = :calculated_below
+    lc4ø = :calculated_below
 
     lambda do
       xcrnt, ycrnt = xy
       xleft, yleft = lxy
 
-      # trace radius
-      tr = margin+radius
-
-      # slope
-      m   = (yleft-ycrnt).to_f / (xleft-xcrnt)
-
-      # normal
-      ∆nx = -sqrt((margin**2) * (m**2) / (m**2 + 1))
+      tr  = margin+radius                            # trace radius
+      m   = (yleft-ycrnt).to_f / (xleft-xcrnt)       # slope
+      ∆nx = -sqrt((margin**2) * (m**2) / (m**2 + 1)) # normal
 
       # upper intersection
-      ux1, uy1 = xcrnt+∆nx, ycrnt-∆nx/m
-      ux2, uy2 = xleft+∆nx, yleft-∆nx/m
-      nm = (uy2-uy1) / (ux2-ux1)
+      x, y = xcrnt+∆nx, ycrnt-∆nx/m
+      nm = (yleft-∆nx/m-y) / (xleft+∆nx-x)
+
       # crnt node to left child
-      lc1x, lc1y = find_intersection(ux1, uy1, nm, xcrnt, ycrnt, tr, -1)
+      lc1x, lc1y = find_intersection x, y, nm, xcrnt, ycrnt, tr, -1
       lc1ø = atan2 lc1y-ycrnt, lc1x-xcrnt
+
       # left child from crnt node
-      lc2x, lc2y = find_intersection(ux1, uy1, nm, xleft, yleft, tr,  1)
+      lc2x, lc2y = find_intersection x, y, nm, xleft, yleft, tr,  1
       lc2ø = atan2 lc2y-yleft, lc2x-xleft
 
 
       # lower intersection
-      ux1, uy1 = xcrnt-∆nx, ycrnt+∆nx/m
-      ux2, uy2 = xleft-∆nx, yleft+∆nx/m
-      nm = (uy2-uy1) / (ux2-ux1)
+      x, y = xcrnt-∆nx, ycrnt+∆nx/m
+      nm = (yleft+∆nx/m-y) / (xleft-∆nx-x)
+
       # left child to crnt node
-      lc3x, lc3y = find_intersection(ux1, uy1, nm, xleft, yleft, tr, 1)
+      lc3x, lc3y = find_intersection(x, y, nm, xleft, yleft, tr, 1)
       lc3ø = atan2 lc3y-yleft, lc3x-xleft
+
       # crnt node from left child
-      lc4x, lc4y = find_intersection(ux1, uy1, nm, xcrnt, ycrnt, tr, -1)
+      lc4x, lc4y = find_intersection(x, y, nm, xcrnt, ycrnt, tr, -1)
       lc4ø = atan2 lc4y-ycrnt, lc4x-xcrnt
     end.call
+
 
     # right child angles
     rc1x = rc1y = :calculated_below
@@ -97,48 +96,47 @@ class Traverser2
     rc3x = rc3y = :calculated_below
     rc4x = rc4y = :calculated_below
 
-    rc1ø     = :calculated_below
-    rc2ø     = :calculated_below
-    rc3ø     = :calculated_below
-    rc4ø     = :calculated_below
+    rc1ø = :calculated_below
+    rc2ø = :calculated_below
+    rc3ø = :calculated_below
+    rc4ø = :calculated_below
 
     lambda do
       xcrnt, ycrnt = xy
       xleft, yleft = rxy
 
-      # trace radius
-      tr = margin+radius
-
-      # slope
-      m   = (yleft-ycrnt).to_f / (xleft-xcrnt)
-
-      # normal
-      ∆nx = -sqrt((margin**2) * (m**2) / (m**2 + 1))
+      tr  = margin+radius                            # trace radius
+      m   = (yleft-ycrnt).to_f / (xleft-xcrnt)       # slope
+      ∆nx = -sqrt((margin**2) * (m**2) / (m**2 + 1)) # normal
 
       # upper intersection
-      ux1, uy1 = xcrnt+∆nx, ycrnt-∆nx/m
-      ux2, uy2 = xleft+∆nx, yleft-∆nx/m
-      nm = (uy2-uy1) / (ux2-ux1)
+      x, y = xcrnt+∆nx, ycrnt-∆nx/m
+      nm = (yleft-∆nx/m-y) / (xleft+∆nx-x)
+
       # crnt node to left child
-      rc1x, rc1y = find_intersection(ux1, uy1, nm, xcrnt, ycrnt, tr, 1)
+      rc1x, rc1y = find_intersection(x, y, nm, xcrnt, ycrnt, tr, 1)
       rc1ø = atan2 rc1y-ycrnt, rc1x-xcrnt
+
       # left child from crnt node
-      rc2x, rc2y = find_intersection(ux1, uy1, nm, xleft, yleft, tr, -1)
+      rc2x, rc2y = find_intersection(x, y, nm, xleft, yleft, tr, -1)
       rc2ø = atan2 rc2y-yleft, rc2x-xleft
 
 
       # lower intersection
-      ux1, uy1 = xcrnt-∆nx, ycrnt+∆nx/m
-      ux2, uy2 = xleft-∆nx, yleft+∆nx/m
-      nm = (uy2-uy1) / (ux2-ux1)
+      x, y = xcrnt-∆nx, ycrnt+∆nx/m
+      nm = (yleft+∆nx/m-y) / (xleft-∆nx-x)
+
       # left child to crnt node
-      rc3x, rc3y = find_intersection(ux1, uy1, nm, xleft, yleft, tr, -1)
+      rc3x, rc3y = find_intersection(x, y, nm, xleft, yleft, tr, -1)
       rc3ø = atan2 rc3y-yleft, rc3x-xleft
+
       # crnt node from left child
-      rc4x, rc4y = find_intersection(ux1, uy1, nm, xcrnt, ycrnt, tr, 1)
+      rc4x, rc4y = find_intersection(x, y, nm, xcrnt, ycrnt, tr, 1)
       rc4ø = atan2 rc4y-ycrnt, rc4x-xcrnt
     end.call
 
+
+    # ===== Trace around the tree =====
     emit_line = lambda do |x1, y1, x2, y2|
       block.call :line, [x1, y1, x2, y2]
     end
@@ -178,18 +176,18 @@ class Traverser2
   end
 
   def find_intersection(lx, ly, m, cx, cy, r, dir)
-    qa = m*m+1
-    qb = 2*(ly*m -lx*m*m - cy*m - cx)
-    qc = lx*lx*m*m + -2*lx*ly*m + 2*lx*cy*m +
-         ly*ly + -2*ly*cy +
-         cy*cy + cx*cx - r*r
-    x = quadratic(qa, qb, qc, dir)
+    x = quadratic(
+      m*m+1,
+      2*(ly*m -lx*m*m - cy*m - cx),
+      lx*lx*m*m - 2*lx*ly*m + 2*lx*cy*m + ly*ly - 2*ly*cy + cy*cy + cx*cx - r*r,
+      dir
+    )
     y = (x-lx)*m + ly
     [x, y]
   end
 
   def quadratic(a, b, c, dir)
-    (-b + dir*sqrt(b**2 - 4*a*c)) / 2 / a
+    (-b + dir*sqrt(b**2 - 4*a*c)) / (2*a)
   end
 
   def node_pos(col, row)
