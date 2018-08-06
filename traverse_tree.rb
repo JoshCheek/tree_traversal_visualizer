@@ -2,10 +2,12 @@ require 'graphics'
 require_relative 'traverser'
 
 class TraverseTree < Graphics::Simulation
-  def initialize(tree, radius, w, h)
+  def initialize(tree, w, h)
     super w, h, 31
+
     @tree              = tree
-    @radius            = radius
+    @radius            = 30
+    @margin            = 20
     @big_node_font     = find_font "Tahoma Bold", 32
     @small_node_font   = find_font "Tahoma Bold", 16
     @annotation_font   = find_font "Tahoma",      16
@@ -39,6 +41,17 @@ class TraverseTree < Graphics::Simulation
     display_seen @small_node_font, @label, @traverser&.step if @started
   end
 
+  def build_traverser(order)
+    @traverser = Traverser.new(
+      canvas: self,
+      order:  order,
+      font:   @annotation_font,
+      radius: @radius,
+      tree:   @tree,
+      gait:   2,
+    )
+  end
+
   def set_traversal(order)
     @keydefs.each do |k|
       if k[-2] == order
@@ -52,19 +65,8 @@ class TraverseTree < Graphics::Simulation
     @started   = true
   end
 
-  def build_traverser(order)
-    @traverser = Traverser.new(
-      canvas:       self,
-      order:        order,
-      font:         @annotation_font,
-      radius:       @radius,
-      tree:         @tree,
-      segment_size: 3,
-    )
-  end
-
   def display_seen(font, label, seen)
-    x, y   = 10, 10
+    x, y   = @margin, @margin
     radius = font.height
     text label, x, y, :white, font
     x += text_size(label, font)[0]
@@ -81,7 +83,7 @@ class TraverseTree < Graphics::Simulation
 
   def display_keys(keydefs, font)
     row_h   = font.height+5
-    x, y    = 10, h-10
+    x, y    = @margin, h-@margin
     display = lambda do |str, underline, color|
       y -= row_h
       text str, x, y, color, font
@@ -143,4 +145,4 @@ tree =
       [:+, 5, 6],
       [:+, 7, 8]]]
 
-TraverseTree.new(tree, 30, 1000, 600).run
+TraverseTree.new(tree, 1000, 600).run

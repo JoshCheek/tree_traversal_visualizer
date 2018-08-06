@@ -1,11 +1,11 @@
 class Traverser
   attr_reader :path
 
-  def initialize(canvas:, order:, font:, radius:, tree:, segment_size:)
+  def initialize(canvas:, order:, font:, radius:, tree:, gait:)
     @canvas, @font = canvas, font
     @w, @h = canvas.w, canvas.h
     @order, @radius, @tree = order, radius, tree
-    @segment_size = segment_size
+    @gait = gait
     @margin = radius/2
     @path = visit_nodes(@tree, PI*0.5, PI*2.5, @margin, 0, 0).to_a
   end
@@ -20,7 +20,7 @@ class Traverser
 
   include Math
 
-  attr_reader :segment_size, :canvas, :order, :font, :radius, :tree
+  attr_reader :gait, :canvas, :order, :font, :radius, :tree
 
 
   def visit_nodes(tree, entryø, exitø, margin, col, row, &block)
@@ -206,7 +206,7 @@ class Traverser
       case type
       when :line
         i += 1
-        canvas.line *vars, :yellow
+        canvas.line *vars, :annotation
       when order
         i += 1
         tree, (circlex, circley), * = vars
@@ -233,7 +233,7 @@ class Traverser
   def path_arc(x1, y1, x2, y2, &block)
     return to_enum(:path_arc, x1, y1, x2, y2) unless block
     m  = (y2-y1)/(x2-x1)
-    ∆x = sqrt (segment_size**2)/(1+m**2)
+    ∆x = sqrt (gait**2)/(1+m**2)
     ∆x *= -1 if x2 < x1
     x  = x1+∆x
     y  = y1+∆x*m
@@ -255,7 +255,7 @@ class Traverser
     stopø  += 2*PI if stopø == 0
     return if stopø < startø
     r  = radius + margin
-    ∆ø = segment_size.to_f / r
+    ∆ø = gait.to_f / r
     prevø = startø
     crntø = prevø + ∆ø
     while crntø < stopø
