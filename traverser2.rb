@@ -37,12 +37,17 @@ class Traverser2
     xy  = node_pos  col,  row
     lxy = node_pos lcol, crow
     rxy = node_pos rcol, crow
+    lc1x = lc1y = :figure_me_out!
+    lc2x = lc2y = :figure_me_out!
 
     # relevant angles
     preø     = PI
     inø      = 3*PI/2
     postø    = 2*PI
-    lcstartø = "??"
+    lc1ø     = "??"
+    lc2ø     = "??"
+    lc3ø     = "??"
+    lc4ø     = "??"
     lambda do
       # consider the line from left child to crnt
       # now give it a stroke of 1 margin on each side
@@ -66,12 +71,32 @@ class Traverser2
 
       # upper intersections
       nm = (uy2-uy1) / (ux2-ux1)
-      canvas.circle *find_intersection(ux1, uy1, nm, xcrnt, ycrnt, tr, -1), 5, :red, true
-      canvas.circle *find_intersection(ux1, uy1, nm, xleft, yleft, tr,  1), 5, :red, true
+
+      # use these to figure otu lc1ø
+      lc1x, lc1y = find_intersection(ux1, uy1, nm, xcrnt, ycrnt, tr, -1)
+      lc1ø = atan2 lc1y-ycrnt, lc1x-xcrnt
+
+      # canvas.line(
+      #   xcrnt, ycrnt,
+      #   xcrnt+cos(lc1ø)*100,
+      #   ycrnt+sin(lc1ø)*100,
+      #   :red
+      # )
+
+      # use these to figure otu lc2ø
+      lc2x, lc2y = find_intersection(ux1, uy1, nm, xleft, yleft, tr,  1)
+      lc2ø = atan2 lc2y-yleft, lc2x-xleft
+
+      # canvas.line(
+      #   xleft, yleft,
+      #   xleft+cos(lc2ø)*100,
+      #   yleft+sin(lc2ø)*100,
+      #   :red
+      # )
     end.call
 
     # trace from entry to pre
-    block.call :enter, tree, xy, entryø, exitø
+    block.call :enter, tree, xy, entryø
     node_arc *xy, entryø, preø, margin  do |x1, y1, x2, y2|
       block.call :line, [x1, y1, x2, y2]
     end
@@ -79,15 +104,19 @@ class Traverser2
     # emit pre
     block.call :pre, [tree, xy, lxy, rxy]
 
-    # trace from pre to lcstart
-    # node_arc *xy, preø, lcstartø, margin  do |x1, y1, x2, y2|
-    #   block.call :line, [x1, y1, x2, y2]
-    # end
+    # trace from pre to lc1ø
+    node_arc *xy, preø, lc1ø, margin  do |x1, y1, x2, y2|
+      block.call :line, [x1, y1, x2, y2]
+    end
 
-#   if there is a left child
-#     emit :exit
-#     for each line segment along the connection
-#       emit :line
+
+    # if there is a left child go visit it
+    if left
+      block.call :exit, tree, xy, lc1ø
+      path_arc lc1x, lc1y, lc2x, lc2y do |x1, y1, x2, y2|
+        block.call :line, [x1, y1, x2, y2]
+      end
+    end
 #     visit left child
 #     for each line segment along the connection coming back
 #       emit :line
@@ -179,6 +208,7 @@ class Traverser2
       when :post
         tree, xy, * = vars
       when :enter
+      when :exit
       when :line
         canvas.line *vars, :yellow
       else raise "wat: #{type.inspect}"
@@ -190,6 +220,8 @@ class Traverser2
 
   def node_arc(x, y, startø, stopø, margin, &block)
     return to_enum(:node_arc, x, y, startø, stopø, margin) unless block
+    startø %= 2*PI
+    stopø  %= 2*PI
     raise "bad angles" if stopø < startø
     r  = radius + margin
     ∆ø = segment_size.to_f / r
@@ -208,6 +240,24 @@ class Traverser2
 
   def angle_to_xy(x, y, r, ø)
     [x+r*Math.cos(ø), y+r*Math.sin(ø)]
+  end
+
+  # this is fkn wrong, it doesn't jump by segment_size,
+  # but I just don't have it in me to figure that fucking shit out right now
+  def path_arc(x1, y1, x2, y2, &block)
+    return to_enum(:path_arc, x1, y1, x2, y2) unless block
+    expected_magnitude = (x2-x1).abs
+    crnt_magnitude     = 0
+    m  = (y2-y1)/(x2-x1)
+    x  = x1
+    y  = y1
+    ∆x = (x2-x1)/20
+    while crnt_magnitude.abs < expected_magnitude
+      block.call x, y, x+∆x, y+∆x*m
+      crnt_magnitude += ∆x
+      x += ∆x
+      y += ∆x*m
+    end
   end
 
 end
