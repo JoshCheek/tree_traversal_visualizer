@@ -31,7 +31,6 @@ class TraverseTree < Graphics::Simulation
     display_keys @keys, @annotation_font
     draw_tree @tree, @radius, @big_node_font
     display_seen @small_node_font, @traverser&.step
-    sleep 0.05
   end
 
   def set_traversal(order)

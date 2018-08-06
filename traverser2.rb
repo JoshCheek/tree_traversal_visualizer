@@ -1,5 +1,5 @@
 class Traverser2
-  attr_reader :canvas, :order, :font, :radius, :tree
+  include Math
 
   def initialize(canvas:, order:, font:, radius:, tree:)
     @canvas, @font = canvas, font
@@ -10,16 +10,22 @@ class Traverser2
 
   def step
     @i += 1
-    path = visit_nodes(@tree, PI/2, PI/2, 0, 0).to_a
+    path = visit_nodes(@tree, PI*0.5, PI*2.5, 0, 0).to_a
     call path, @i
   end
 
   private
 
   PI = Math::PI
+  attr_reader :canvas, :order, :font, :radius, :tree
+
 
   def visit_nodes(tree, entryø, exitø, col, row, &block)
-    return to_enum(__method__, tree, col, row) unless block
+    return to_enum(__method__, tree, entryø, exitø, col, row) unless block
+    preø  = PI
+    inø   = 3*PI/2
+    postø = 2*PI
+
     lcol = col*2   # left  child column
     rcol = col*2+1 # right child column
     crow = row+1   # child row
@@ -30,12 +36,14 @@ class Traverser2
     lxy = node_pos lcol, crow if left
     rxy = node_pos rcol, crow if right
 
-#   # the actual traversal
-#   emit :enter at the entry angle
-#   for each line segment around the node, from the entryø to 90deg
-#     emit :line
+    # the actual tracing traversal
+    block.call :enter, tree, xy, entryø, exitø
 
-#   emit :pre
+    node_arc *xy, entryø, preø, 2*radius, 3  do |x1, y1, x2, y2|
+      block.call :line, [x1, y1, x2, y2]
+    end
+
+    block.call :pre,  tree, xy, lxy, rxy
 
 #   for each line segment from 90 to lcstart
 #     emit :line
@@ -70,11 +78,13 @@ class Traverser2
 #   for each line segment from rcend to exitø
 #     emit line
 
-    block.call :pre,  tree, xy, lxy, rxy
-    visit_nodes left,  lcol, crow, &block if left
-    block.call :in,   tree, xy, lxy, rxy
-    visit_nodes right, rcol, crow, &block if right
-    block.call :post, tree, xy, lxy, rxy
+    idk1ø = PI/2 + 0.5
+    idk2ø = PI/2 - 0.5
+
+    visit_nodes left,  idk1ø, idk2ø, lcol, crow, &block if left
+    # block.call :in,   tree, xy, lxy, rxy
+    visit_nodes right, idk1ø, idk2ø, rcol, crow, &block if right
+    # block.call :post, tree, xy, lxy, rxy
   end
 
   def node_pos(col, row)
@@ -88,52 +98,43 @@ class Traverser2
   end
 
   def call(path, i)
-    line_offset   = radius+10
-    marker_offset = radius-3
-    px = py       = nil
-    seen          = []
-    deferred      = []
-    path.take(i).each do |crnt_order, tree, xy, *|
-      cx, cy = xy
-      case crnt_order
-      when :pre  then cx -= line_offset
-      when :in   then cy -= line_offset
-      when :post then cx += line_offset
-      else raise "wat: #{crnt_order.inspect}"
-      end
-      canvas.line px, py, cx, cy, :green if px
-      px, py = cx, cy
-
-      next unless order == crnt_order
-      seen << tree
-
-      str        = seen.size.to_s
-      strw, strh = canvas.text_size str, font
-      strx, stry = xy
-      case order
+    path.take(i).each do |type, vars|
+      case type
       when :pre
-        strx -= marker_offset
-        strx -= strw
-        stry -= strh/2
       when :in
-        stry -= marker_offset
-        strx -= strw/2
-        stry -= strh
       when :post
-        strx += marker_offset
-        stry -= strh/2
-      else raise "wat: #{order.inspect}"
-      end
-      deferred << lambda do
-        circlex = strx+strw/2
-        circley = stry+strh/2
-        circler = font.height*0.65
-        canvas.circle circlex, circley, circler, :red, true
-        # canvas.circle circlex, circley, circler, :white, false
-        canvas.text str, strx, stry, :white, font
+      when :enter
+      when :line
+        canvas.line *vars, :yellow
+      else raise "wat: #{type.inspect}"
       end
     end
-    deferred.each &:call
-    seen
+    []
   end
+
+  def segment_size
+    2 # px
+  end
+
+  def node_arc(x, y, startø, stopø, r, segment_size, &block)
+    return to_enum(:node_arc, x, y, startø, stopø, r, segment_size) unless block
+    raise "bad angles" if stopø < startø
+    ∆ø = segment_size.to_f / r
+    prevø = startø
+    crntø = prevø + ∆ø
+    while crntø < stopø
+      block.call *angle_pair_to_xy(x, y, r, prevø, crntø)
+      prevø, crntø = crntø, crntø+∆ø
+    end
+    block.call *angle_pair_to_xy(x, y, r, prevø, stopø)
+  end
+
+  def angle_pair_to_xy(x, y, r, ø1, ø2)
+    angle_to_xy(x, y, r, ø1) + angle_to_xy(x, y, r, ø2)
+  end
+
+  def angle_to_xy(x, y, r, ø)
+    [x+r*Math.cos(ø), y+r*Math.sin(ø)]
+  end
+
 end
