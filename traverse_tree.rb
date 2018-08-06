@@ -24,16 +24,16 @@ class TraverseTree < Graphics::Simulation
       add_key_handler(key_id) { set_traversal order }
     end
     add['K1', '1', "Pre-order",  :pre, <<~DESC]
-      Point to the right as you traverse the tree.
-      When you're pointing at a node, add it to the list!
+      When you pass the left side of a node, add it to the list!
+      In code, this happens *before* you traverse its children.
     DESC
     add['K2', '2', "In-order",   :in, <<~DESC]
-      Point up as you traverse the tree.
-      When you're pointing at a node, add it to the list!
+      When you pass under a node, add it to the list!
+      In code, this happens *between* the traversal of its children.
     DESC
     add['K3', '3', "Post-order", :post, <<~DESC]
-      Point to the left as you traverse the tree.
-      When you're pointing at a node, add it to the list!
+      When you pass the right side of a node, add it to the list!
+      In code, this happens *after* you traverse its children.
     DESC
 
     @path = build_traverser(nil)
@@ -116,6 +116,7 @@ class TraverseTree < Graphics::Simulation
   def display_desc(desc, font)
     y = h-@margin
     desc.lines.map(&:chomp).each do |line|
+      line = " " if line.empty?
       strw, strh = text_size line, font
       y -= strh
       text line, w-@margin-strw, y, :white, font
