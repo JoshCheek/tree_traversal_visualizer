@@ -5,9 +5,8 @@ class TraverseTree < Graphics::Simulation
     super w, h, 31
     @tree              = tree
     @radius            = radius
-    @node_font         = find_font "Menlo", 32
-    @annotation_font   = find_font "Menlo", 10
-    @instructions_font = find_font "AquaKana", 15
+    @node_font         = find_font "Arial Bold", 32
+    @annotation_font   = find_font "Arial Bold", 16
 
     register_color :leaf, 0x22, 0x66, 0x11, 0x00
     register_color :node, 0x88, 0x44, 0x11, 0x00
@@ -30,42 +29,42 @@ class TraverseTree < Graphics::Simulation
     clear
     display_keys
     draw_tree @tree
-    display_seen @traverser&.step
+    display_seen @annotation_font, @traverser&.step
     sleep 0.05
   end
 
   def set_traversal(order)
-    @keys.each { |keydef| keydef[-1] = keydef[-2] == order ? :green : :white }
+    @keys.each do |keydef|
+      keydef[-1] = (keydef[-2] == order ? :green : :white )
+    end
     @traverser = Traverser.new(
       canvas: self,
       order:  order,
       path:   traverse_tree(@tree).to_a,
-      font:   @instructions_font,
+      font:   @annotation_font,
       radius: @radius,
     )
   end
 
-  def display_seen(seen)
-    font    = @instructions_font
-    x, y    = 10, 10
-    radius  = font.height
-    label = "Seen: "
+  def display_seen(font, seen)
+    x, y   = 10, 10
+    radius = font.height
+    label  = "Seen: "
     text label, x, y, :white, font
     x += text_size(label, font)[0]
-    seen.each_with_index do |tree, index|
+    seen.each do |tree|
       bg_color = fill_color leaf?(tree)
-      content, * = tree
-      str = content.to_s
+      str  = Array(tree).first.to_s
       w, h = text_size str, font
       x += radius
-      circle x+w/2, y+h/2, radius, bg_color, true
+      circle x+w/2, y+h/2, radius*0.7, bg_color, true
       text str, x, y, :white, font
-      x += w+radius
+      x += w + 5
     end
   end
 
   def display_keys
-    font    = @instructions_font
+    font    = @annotation_font
     row_h   = font.height+5
     x, y    = 10, h-10
     display = lambda do |str, underline, color|
@@ -79,28 +78,6 @@ class TraverseTree < Graphics::Simulation
     display["Keys", true, :white]
     @keys.map { |key, desc, _, color| display["#{key}: #{desc}", false, color] }
     display["q: quit", false, :white]
-  end
-
-  def draw_traversal(tree)
-    prevxy = nil
-    traverse_tree(tree).each_with_index do |(torder, _node, xy, *), i|
-      f      = @annotation_font
-      str    = i.to_s
-      offset = @radius+10
-      strw, strh = text_size str, f
-      x,    y    = xy
-      case torder
-      when :pre  then strx, stry = x-offset-strw, y-strh/2
-      when :in   then strx, stry = x-strw/2,      y-offset-strh
-      when :post then strx, stry = x+offset,      y-strh/2
-      else raise "wat: #{torder.inspect}"
-      end
-      text str, strx, stry, :white, f
-
-      strxy = [strx, stry]
-      prevxy && line(*prevxy, *strxy, :green)
-      prevxy = strxy
-    end
   end
 
   def draw_tree(tree)
@@ -208,6 +185,7 @@ class Traverser
 
       next unless order == crnt_order
       seen << tree
+
       str        = seen.size.to_s
       strw, strh = canvas.text_size str, font
       strx, stry = xy
@@ -228,14 +206,14 @@ class Traverser
       deferred << lambda do
         circlex = strx+strw/2
         circley = stry+strh/2
-        circler = font.height*0.7
+        circler = font.height*0.65
         canvas.circle circlex, circley, circler, :red, true
-        canvas.circle circlex, circley, circler, :white, false
+        # canvas.circle circlex, circley, circler, :white, false
         canvas.text str, strx, stry, :white, font
       end
     end
     deferred.each &:call
-    seen.dup
+    seen
   end
 end
 
