@@ -37,19 +37,23 @@ class Traverser2
     xy  = node_pos  col,  row
     lxy = node_pos lcol, crow
     rxy = node_pos rcol, crow
-    lc1x = lc1y = :calculated_below
-    lc2x = lc2y = :calculated_below
-    lc3x = lc3y = :calculated_below
-    lc4x = lc4y = :calculated_below
 
     # relevant angles
     preø     = PI
     inø      = 3*PI/2
     postø    = 2*PI
+
+    # left child angles
+    lc1x = lc1y = :calculated_below
+    lc2x = lc2y = :calculated_below
+    lc3x = lc3y = :calculated_below
+    lc4x = lc4y = :calculated_below
+
     lc1ø     = :calculated_below
     lc2ø     = :calculated_below
     lc3ø     = :calculated_below
     lc4ø     = :calculated_below
+
     lambda do
       # consider the line from left child to crnt
       # now give it a stroke of 1 margin on each side
@@ -91,24 +95,65 @@ class Traverser2
       lc4ø = atan2 lc4y-ycrnt, lc4x-xcrnt
     end.call
 
-    # trace from entry to pre
-    block.call :enter, tree, xy, entryø
+    # right child angles
+    rc1x = rc1y = :calculated_below
+    rc2x = rc2y = :calculated_below
+    rc3x = rc3y = :calculated_below
+    rc4x = rc4y = :calculated_below
+
+    rc1ø     = :calculated_below
+    rc2ø     = :calculated_below
+    rc3ø     = :calculated_below
+    rc4ø     = :calculated_below
+
+    lambda do
+      xcrnt, ycrnt = xy
+      xleft, yleft = rxy
+
+      # trace radius
+      tr = margin+radius
+
+      # slope
+      m   = (yleft-ycrnt).to_f / (xleft-xcrnt)
+
+      # normal
+      ∆nx = -sqrt((margin**2) * (m**2) / (m**2 + 1))
+
+      # upper intersection
+      ux1, uy1 = xcrnt+∆nx, ycrnt-∆nx/m
+      ux2, uy2 = xleft+∆nx, yleft-∆nx/m
+      nm = (uy2-uy1) / (ux2-ux1)
+      # crnt node to left child
+      rc1x, rc1y = find_intersection(ux1, uy1, nm, xcrnt, ycrnt, tr, 1)
+      rc1ø = atan2 rc1y-ycrnt, rc1x-xcrnt
+      # left child from crnt node
+      rc2x, rc2y = find_intersection(ux1, uy1, nm, xleft, yleft, tr, -1)
+      rc2ø = atan2 rc2y-yleft, rc2x-xleft
+
+
+      # lower intersection
+      ux1, uy1 = xcrnt-∆nx, ycrnt+∆nx/m
+      ux2, uy2 = xleft-∆nx, yleft+∆nx/m
+      nm = (uy2-uy1) / (ux2-ux1)
+      # left child to crnt node
+      rc3x, rc3y = find_intersection(ux1, uy1, nm, xleft, yleft, tr, -1)
+      rc3ø = atan2 rc3y-yleft, rc3x-xleft
+      # crnt node from left child
+      rc4x, rc4y = find_intersection(ux1, uy1, nm, xcrnt, ycrnt, tr, 1)
+      rc4ø = atan2 rc4y-ycrnt, rc4x-xcrnt
+    end.call
+
+    # entry -> pre -> left child
     node_arc *xy, entryø, preø, margin  do |x1, y1, x2, y2|
       block.call :line, [x1, y1, x2, y2]
     end
-
-    # emit pre
     block.call :pre, [tree, xy, lxy, rxy]
-
-    # trace from pre to lc1ø
     node_arc *xy, preø, lc1ø, margin  do |x1, y1, x2, y2|
       block.call :line, [x1, y1, x2, y2]
     end
 
-
-    # if there is a left child go visit it
+    # left child
     if left
-      block.call :exit, tree, xy, lc1ø
       path_arc lc1x, lc1y, lc2x, lc2y do |x1, y1, x2, y2|
         block.call :line, [x1, y1, x2, y2]
       end
@@ -116,39 +161,44 @@ class Traverser2
       path_arc lc3x, lc3y, lc4x, lc4y do |x1, y1, x2, y2|
         block.call :line, [x1, y1, x2, y2]
       end
-
-#     for each line segment along the connection coming back
-#       emit :line
-#     emit :enter
+    else
+      node_arc *xy, lc1ø, lc4ø, margin do |x1, y1, x2, y2|
+        block.call :line, [x1, y1, x2, y2]
+      end
     end
-#   else
-#     for each line segment from lcstart to lcend
-#       emit :line
 
-#   for each line segment from lcend to rcstart
-#     emit :line
+    # left child -> infix -> right child
+    node_arc *xy, lc4ø, inø, margin do |x1, y1, x2, y2|
+      block.call :line, [x1, y1, x2, y2]
+    end
+    block.call :in, [tree, xy, lxy, rxy]
+    node_arc *xy, inø, rc1ø, margin do |x1, y1, x2, y2|
+      block.call :line, [x1, y1, x2, y2]
+    end
 
-#   if there is a right child
-#     emit :exit
-#     for each line segment along the connection
-#       emit :line
-#     visit right child
-#     for each line segment along the connection coming back
-#       emit :line
-#     emit :enter
-#   else
-#     for each line segment from ccstart to rcend
-#       emit :line
+    # right child
+    if right
+      path_arc rc1x, rc1y, rc2x, rc2y do |x1, y1, x2, y2|
+        block.call :line, [x1, y1, x2, y2]
+      end
+      visit_nodes right, rc2ø, rc3ø, margin, rcol, crow, &block if right
+      path_arc rc3x, rc3y, rc4x, rc4y do |x1, y1, x2, y2|
+        block.call :line, [x1, y1, x2, y2]
+      end
+    else
+      node_arc *xy, rc1ø, rc4ø, margin do |x1, y1, x2, y2|
+        block.call :line, [x1, y1, x2, y2]
+      end
+    end
 
-#   for each line segment from rcend to exitø
-#     emit line
-
-    idk1ø = PI/2 + 0.5
-    idk2ø = PI/2 - 0.5
-
-    # block.call :in,   [tree, xy, lxy, rxy]
-    visit_nodes right, idk1ø, idk2ø, margin, rcol, crow, &block if right
-    # block.call :post, [tree, xy, lxy, rxy]
+    # right child -> post -> exit
+    node_arc *xy, rc4ø, postø, margin  do |x1, y1, x2, y2|
+      block.call :line, [x1, y1, x2, y2]
+    end
+    block.call :post, [tree, xy, lxy, rxy]
+    node_arc *xy, postø, exitø, margin  do |x1, y1, x2, y2|
+      block.call :line, [x1, y1, x2, y2]
+    end
   end
 
   def find_intersection(lx, ly, m, cx, cy, r, dir)
@@ -206,8 +256,6 @@ class Traverser2
         tree, xy, * = vars
       when :post
         tree, xy, * = vars
-      when :enter
-      when :exit
       when :line
         canvas.line *vars, :yellow
       else raise "wat: #{type.inspect}"
@@ -219,9 +267,10 @@ class Traverser2
 
   def node_arc(x, y, startø, stopø, margin, &block)
     return to_enum(:node_arc, x, y, startø, stopø, margin) unless block
-    startø %= 2*PI
-    stopø  %= 2*PI
-    raise "bad angles" if stopø < startø
+    startø %= (2*PI)
+    stopø  %= (2*PI)
+    stopø  += (2*PI) if stopø == 0
+    return if stopø < startø
     r  = radius + margin
     ∆ø = segment_size.to_f / r
     prevø = startø
@@ -250,7 +299,7 @@ class Traverser2
     m  = (y2-y1)/(x2-x1)
     x  = x1
     y  = y1
-    ∆x = (x2-x1)/20
+    ∆x = (x2-x1)/10
     while crnt_magnitude.abs < expected_magnitude
       block.call x, y, x+∆x, y+∆x*m
       crnt_magnitude += ∆x
