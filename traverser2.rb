@@ -9,8 +9,11 @@ class Traverser2
   end
 
   def step
-    path = visit_nodes(@tree, PI*0.5, PI*2.5, 0, 0).to_a
-    call path.take(@i+=1)
+    trace_radius = 1.5*radius
+    segment_size  = 10
+    path = visit_nodes(@tree, PI*0.5, PI*2.5, trace_radius, segment_size, 0, 0).to_a
+    @i += 1
+    call path.take(@i), trace_radius
   end
 
   private
@@ -19,10 +22,8 @@ class Traverser2
   attr_reader :canvas, :order, :font, :radius, :tree
 
 
-  def visit_nodes(tree, entryø, exitø, col, row, &block)
-    return to_enum(__method__, tree, entryø, exitø, col, row) unless block
-    segment_size  = 10
-    trace_readius = 2 * radius
+  def visit_nodes(tree, entryø, exitø, trace_radius, segment_size, col, row, &block)
+    return to_enum(__method__, tree, entryø, exitø, trace_radius, segment_size, col, row) unless block
 
     preø  = PI
     inø   = 3*PI/2
@@ -41,7 +42,7 @@ class Traverser2
     # the actual tracing traversal
     block.call :enter, tree, xy, entryø, exitø
 
-    node_arc *xy, entryø, preø, trace_readius, segment_size  do |x1, y1, x2, y2|
+    node_arc *xy, entryø, preø, trace_radius, segment_size  do |x1, y1, x2, y2|
       block.call :line, [x1, y1, x2, y2]
     end
 
@@ -83,9 +84,9 @@ class Traverser2
     idk1ø = PI/2 + 0.5
     idk2ø = PI/2 - 0.5
 
-    visit_nodes left,  idk1ø, idk2ø, lcol, crow, &block if left
+    visit_nodes left,  idk1ø, idk2ø, trace_radius, segment_size, lcol, crow, &block if left
     # block.call :in,   [tree, xy, lxy, rxy]
-    visit_nodes right, idk1ø, idk2ø, rcol, crow, &block if right
+    visit_nodes right, idk1ø, idk2ø, trace_radius, segment_size, rcol, crow, &block if right
     # block.call :post, [tree, xy, lxy, rxy]
   end
 
@@ -99,9 +100,7 @@ class Traverser2
     [x, y]
   end
 
-  def call(path)
-    line_offset   = radius+10
-    marker_offset = radius-3
+  def call(path, trace_radius)
     deferred      = []
     seen          = []
     path.each do |type, vars|
@@ -114,7 +113,7 @@ class Traverser2
           strw, strh = canvas.text_size str, font
           strx, stry = xy
 
-          strx -= marker_offset
+          strx -= trace_radius
           strx -= strw
           stry -= strh/2
 
