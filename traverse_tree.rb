@@ -2,6 +2,8 @@ require 'graphics'
 require_relative 'traverser'
 
 class TraverseTree < Graphics::Simulation
+  Keydef = Struct.new :key_id, :slug, :name, :description, :order, :color
+
   def initialize(tree, w, h)
     super w, h, 31
 
@@ -17,13 +19,22 @@ class TraverseTree < Graphics::Simulation
     register_color :annotation, 0x88, 0x22, 0x22, 0x00
 
     @keydefs = []
-    add = lambda do |key_id, slug, desc, order|
-      @keydefs << [slug, desc, order, :white]
+    add = lambda do |key_id, slug, name, order, desc|
+      @keydefs << Keydef.new(key_id, slug, name, desc, order, :white)
       add_key_handler(key_id) { set_traversal order }
     end
-    add['K1', '1', "Pre-order",  :pre]
-    add['K2', '2', "In-order",   :in]
-    add['K3', '3', "Post-order", :post]
+    add['K1', '1', "Pre-order",  :pre, <<~DESC]
+      Point to the right as you traverse the tree.
+      When you're pointing at a node, add it to the list!
+    DESC
+    add['K2', '2', "In-order",   :in, <<~DESC]
+      Point up as you traverse the tree.
+      When you're pointing at a node, add it to the list!
+    DESC
+    add['K3', '3', "Post-order", :post, <<~DESC]
+      Point to the left as you traverse the tree.
+      When you're pointing at a node, add it to the list!
+    DESC
 
     @path = build_traverser(nil)
               .path
@@ -32,11 +43,13 @@ class TraverseTree < Graphics::Simulation
 
     @started = false
     @label   = ""
+    @desc    = "Press the number of the traversal style you'd like to watch."
   end
 
   def draw(n)
     clear
     display_keys @keydefs, @annotation_font
+    display_desc @desc, @annotation_font
     draw_tree @path, @radius, @big_node_font
     display_seen @small_node_font, @label, @traverser&.step if @started
   end
@@ -54,11 +67,12 @@ class TraverseTree < Graphics::Simulation
 
   def set_traversal(order)
     @keydefs.each do |k|
-      if k[-2] == order
-        k[-1]  = :green
-        @label = k[1] + ": "
+      if k.order == order
+        k.color = :green
+        @label = k.name + ": "
+        @desc  = k.description
       else
-        k[-1] = :white
+        k.color = :white
       end
     end
     @traverser = build_traverser order
@@ -93,8 +107,19 @@ class TraverseTree < Graphics::Simulation
       end
     end
     display["Keys", true, :white]
-    keydefs.map { |key, desc, _, color| display["#{key}: #{desc}", false, color] }
+    keydefs.map do |k|
+      display["#{k.slug}: #{k.name}", false, k.color]
+    end
     display["q: quit", false, :white]
+  end
+
+  def display_desc(desc, font)
+    y = h-@margin
+    desc.lines.map(&:chomp).each do |line|
+      strw, strh = text_size line, font
+      y -= strh
+      text line, w-@margin-strw, y, :white, font
+    end
   end
 
   def draw_tree(path, radius, font)
