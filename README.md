@@ -13,12 +13,33 @@ Preorder
 
 ![preorder tree traversal animation](images/preorder-tree-traversal.gif)
 
+
 Inorder
 -------
 
 ![preorder tree traversal animation](images/inorder-tree-traversal.gif)
 
+
 Postorder
 ---------
 
 ![preorder tree traversal animation](images/postorder-tree-traversal.gif)
+
+
+To run the code
+---------------
+
+You'll need [Ryan Davis](https://twitter.com/the_zenspider)'s
+[Graphics](https://github.com/zenspider/graphics) library.
+
+[Here](http://rayhightower.com/blog/2017/02/15/animated-graphics-in-ruby/)
+are some nice installation instructions by
+[Ray Hightower](https://twitter.com/RayHightower).
+
+
+License
+-------
+
+[![wtfpl](http://www.wtfpl.net/wp-content/uploads/2012/12/wtfpl-badge-1.png)](http://www.wtfpl.net/about/)
+
+Just do what the fuck you want to.
