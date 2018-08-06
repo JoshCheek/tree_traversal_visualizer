@@ -14,17 +14,41 @@ Done.
 Preorder
 --------
 
+```ruby
+def traverse(tree, &block)
+  block.call tree.data # preorder
+  traverse tree.left, list, &block
+  traverse tree.right, list, &block
+end
+```
+
 ![preorder tree traversal animation](images/preorder-tree-traversal.gif)
 
 
 Inorder
 -------
 
+```ruby
+def traverse(tree, &block)
+  traverse tree.left, list, &block
+  block.call tree.data # inorder
+  traverse tree.right, list, &block
+end
+```
+
 ![preorder tree traversal animation](images/inorder-tree-traversal.gif)
 
 
 Postorder
 ---------
+
+```ruby
+def traverse(tree, &block)
+  traverse tree.left, list, &block
+  traverse tree.right, list, &block
+  block.call tree.data # postorder
+end
+```
 
 ![preorder tree traversal animation](images/postorder-tree-traversal.gif)
 
