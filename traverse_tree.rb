@@ -38,10 +38,14 @@ class TraverseTree < Graphics::Simulation
     @traverser = Traverser.new(
       canvas: self,
       order:  order,
-      path:   traverse_tree(@tree).to_a,
+      path:   visit_nodes(@tree).to_a,
       font:   @annotation_font,
       radius: @radius,
     )
+  end
+
+  def visit_nodes(tree, &block)
+    VisitNodes.new(tree, 0, 0, w, h, @radius, &block).call
   end
 
   def display_seen(font, seen)
@@ -78,16 +82,59 @@ class TraverseTree < Graphics::Simulation
   end
 
   def draw_tree(tree, radius, font)
-    traverse_tree tree do |torder, node, xy, lxy, rxy|
+    visit_nodes tree do |torder, node, xy, lxy, rxy|
       next unless torder == :pre
       content, left, right = node
-      draw_node content, *xy, radius, leaf?(node), font
-      connect_nodes *xy, *lxy, :white if left
-      connect_nodes *xy, *rxy, :white if right
+      circle *xy, radius, fill_color(leaf?(node)), true
+      center_text content.to_s, *xy, :white, font
+      line *line_between_nodes(*xy, *lxy), :white if left
+      line *line_between_nodes(*xy, *rxy), :white if right
     end
   end
 
-  def traverse_tree(tree, col=0, row=0, &block)
+  def fill_color(is_leaf)
+    is_leaf ? :leaf : :node
+  end
+
+  def line_between_nodes(x1, y1, x2, y2)
+    ∆x = x2-x1
+    ∆y = y2-y1
+    h  = Math.sqrt ∆x**2 + ∆y**2
+    rx = @radius * ∆x / h
+    ry = @radius * ∆y / h
+    [x1+rx, y1+ry, x2-rx, y2-ry]
+  end
+
+  def center_text(str, x, y, c, font)
+    w, h = text_size str, font
+    text str, x-w/2, y-h/2, c, font
+  end
+
+  def text_size(str, font)
+    rendered = font.render screen, str, color[:white] # color is irrelevant here
+    return rendered.w, rendered.h
+  end
+
+  def leaf?(tree)
+    content, left, right = tree
+    !left && !right
+  end
+end
+
+
+class VisitNodes
+  def initialize(tree, col, row, w, h, radius, &block)
+    @tree, @col, @row, @block = tree, col, row, block
+    @w, @h, @radius = w, h, radius
+  end
+
+  def call
+    traverse_tree @tree, @col, @row, &@block
+  end
+
+  private
+
+  def traverse_tree(tree, col, row, &block)
     return to_enum(__method__, tree, col, row) unless block
     lcol = col*2   # left  child column
     rcol = col*2+1 # right child column
@@ -107,49 +154,17 @@ class TraverseTree < Graphics::Simulation
     block.call :post, tree, xy, lxy, rxy
   end
 
-  def draw_node(content, x, y, r, is_leaf, font)
-    circle x, y, r, fill_color(is_leaf), true
-    center_text content.to_s, x, y, :white, font
-  end
-
-  def fill_color(is_leaf)
-    is_leaf ? :leaf : :node
-  end
-
-  def connect_nodes(x1, y1, x2, y2, c)
-    ∆x = x2-x1
-    ∆y = y2-y1
-    h  = Math.sqrt ∆x**2 + ∆y**2
-    rx = @radius * ∆x / h
-    ry = @radius * ∆y / h
-    line x1+rx, y1+ry, x2-rx, y2-ry, c
-  end
-
   def center_for(col, row)
     col_margin = 50
     row_margin = 50
     num_cols   = 2**row
-    col_width  = (w - 2*col_margin) / num_cols
+    col_width  = (@w - 2*col_margin) / num_cols
     x = col*col_width + col_width/2 + col_margin
-    y = h - (row+1)*(row_margin + 2*@radius)
+    y = @h - (row+1)*(row_margin + 2*@radius)
     [x, y]
   end
-
-  def center_text(str, x, y, c, font)
-    w, h = text_size str, font
-    text str, x-w/2, y-h/2, c, font
-  end
-
-  def text_size(str, font)
-    rendered = font.render screen, str, color[:white] # color is irrelevant here
-    return rendered.w, rendered.h
-  end
-
-  def leaf?(tree)
-    content, left, right = tree
-    !left && !right
-  end
 end
+
 
 class Traverser
   attr_reader :canvas, :order, :path, :font, :radius
