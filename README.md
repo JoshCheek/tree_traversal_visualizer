@@ -16,9 +16,9 @@ Preorder
 
 ```ruby
 def traverse(tree, &block)
-  block.call tree.data # preorder
-  traverse tree.left, list, &block
-  traverse tree.right, list, &block
+  block.call tree.data # <--
+  traverse tree.left, &block
+  traverse tree.right, &block
 end
 ```
 
@@ -30,9 +30,9 @@ Inorder
 
 ```ruby
 def traverse(tree, &block)
-  traverse tree.left, list, &block
-  block.call tree.data # inorder
-  traverse tree.right, list, &block
+  traverse tree.left, &block
+  block.call tree.data # <--
+  traverse tree.right, &block
 end
 ```
 
@@ -44,9 +44,9 @@ Postorder
 
 ```ruby
 def traverse(tree, &block)
-  traverse tree.left, list, &block
-  traverse tree.right, list, &block
-  block.call tree.data # postorder
+  traverse tree.left, &block
+  traverse tree.right, &block
+  block.call tree.data # <--
 end
 ```
 
