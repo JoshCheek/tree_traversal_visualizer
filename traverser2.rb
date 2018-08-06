@@ -207,33 +207,25 @@ class Traverser2
 
     path.each do |type, vars|
       case type
-      when :pre
-        tree, xy, * = vars
-        if type == order
-          i += 1
-          seen << tree
-          str        = seen.size.to_s
-          strw, strh = canvas.text_size str, font
-          circlex, circley = xy
-
-          circlex = circlex - radius - margin/2
-          strx    = circlex - strw/2
-          stry    = circley - strh/2
-
-          deferred << lambda do
-            circler = font.height*0.65
-            canvas.circle circlex, circley, circler, :red, true
-            canvas.text str, strx, stry, :white, font
-          end
-        end
-      when :in
-        tree, xy, * = vars
-      when :post
-        tree, xy, * = vars
       when :line
         i += 1
         canvas.line *vars, :yellow
-      else raise "wat: #{type.inspect}"
+      when order
+        i += 1
+        tree, (circlex, circley), * = vars
+        seen << tree
+        str        = seen.size.to_s
+        strw, strh = canvas.text_size str, font
+        case type
+        when :pre  then circlex = circlex - radius - margin/2
+        when :in   then circley = circley - radius - margin/2
+        when :post then circlex = circlex + radius + margin/2
+        end
+        deferred << lambda do
+          circler = font.height*0.65
+          canvas.circle circlex, circley, circler, :red, true
+          canvas.text str, circlex-strw/2, circley-strh/2, :white, font
+        end
       end
       break if stop_at <= i
     end
