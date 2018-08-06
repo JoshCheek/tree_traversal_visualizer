@@ -6,14 +6,14 @@ class Traverser2
     @w, @h = canvas.w, canvas.h
     @order, @radius, @tree = order, radius, tree
     @i = 0
-    @segment_size = 2
+    @segment_size = 10
   end
 
   def step
     margin = radius/2
     path = visit_nodes(@tree, PI*0.5, PI*2.5, margin, 0, 0).to_a
     @i += 1
-    call path.take(@i), radius+margin
+    call path, @i, radius+margin
   end
 
   private
@@ -55,10 +55,6 @@ class Traverser2
     lc4ø     = :calculated_below
 
     lambda do
-      # consider the line from left child to crnt
-      # now give it a stroke of 1 margin on each side
-      # wherever the line of its margin goes through
-      # the trace radius of the circle, that is our lcstartø
       xcrnt, ycrnt = xy
       xleft, yleft = lxy
 
@@ -226,14 +222,18 @@ class Traverser2
     [x, y]
   end
 
-  def call(path, trace_radius)
-    deferred      = []
-    seen          = []
+  def call(path, stop_at, trace_radius)
+    deferred = []
+    seen     = []
+
+    i = 0
+
     path.each do |type, vars|
       case type
       when :pre
         tree, xy, * = vars
         if type == order
+          i += 1
           seen << tree
           str        = seen.size.to_s
           strw, strh = canvas.text_size str, font
@@ -257,9 +257,11 @@ class Traverser2
       when :post
         tree, xy, * = vars
       when :line
+        i += 1
         canvas.line *vars, :yellow
       else raise "wat: #{type.inspect}"
       end
+      break if stop_at <= i
     end
     deferred.each &:call
     []
