@@ -5,7 +5,7 @@ class TraverseTree < Graphics::Simulation
   Keydef = Struct.new :key_id, :slug, :name, :description, :order, :color
 
   def initialize(tree, w, h)
-    super w, h, 31
+    super w, h, 31, 'Preorder, Inorder, and Postorder Tree Traversal'
 
     @tree              = tree
     @radius            = 30
