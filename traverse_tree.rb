@@ -10,8 +10,9 @@ class TraverseTree < Graphics::Simulation
     @small_node_font   = find_font "Tahoma Bold", 16
     @annotation_font   = find_font "Tahoma",      16
 
-    register_color :leaf, 0x22, 0x66, 0x11, 0x00
-    register_color :node, 0x88, 0x44, 0x11, 0x00
+    register_color :leaf,       0x22, 0x66, 0x11, 0x00
+    register_color :node,       0x88, 0x44, 0x11, 0x00
+    register_color :annotation, 0x88, 0x22, 0x22, 0x00
 
     @keys = []
     add = lambda do |key_id, slug, desc, order|

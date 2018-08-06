@@ -218,7 +218,7 @@ class Traverser2
         end
         deferred << lambda do
           circler = font.height*0.65
-          canvas.circle circlex, circley, circler, :red, true
+          canvas.circle circlex, circley, circler, :annotation, true
           canvas.text str, circlex-strw/2, circley-strh/2, :white, font
         end
       end
