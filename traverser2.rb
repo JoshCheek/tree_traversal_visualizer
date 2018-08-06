@@ -18,9 +18,7 @@ class Traverser2
 
   private
 
-  PI = Math::PI
-  attr_reader :canvas, :order, :font, :radius, :tree
-  attr_reader :segment_size
+  attr_reader :segment_size, :canvas, :order, :font, :radius, :tree
 
 
   def visit_nodes(tree, entryø, exitø, margin, col, row, &block)
@@ -56,37 +54,35 @@ class Traverser2
     lc4ø = :calculated_below
 
     lambda do
-      xcrnt, ycrnt = xy
-      xleft, yleft = lxy
+      cx, cy = xy
+      lx, ly = lxy
+      tr     = margin+radius                            # trace radius
+      m      = (ly-cy).to_f / (lx-cx)                   # slope
+      ∆nx    = -sqrt((margin**2) * (m**2) / (m**2 + 1)) # normal
 
-      tr  = margin+radius                            # trace radius
-      m   = (yleft-ycrnt).to_f / (xleft-xcrnt)       # slope
-      ∆nx = -sqrt((margin**2) * (m**2) / (m**2 + 1)) # normal
-
-      # upper intersection
-      x, y = xcrnt+∆nx, ycrnt-∆nx/m
-      nm = (yleft-∆nx/m-y) / (xleft+∆nx-x)
+      # -- upper intersection --
+      x, y = cx+∆nx, cy-∆nx/m
+      nm = (ly-∆nx/m-y) / (lx+∆nx-x)
 
       # crnt node to left child
-      lc1x, lc1y = find_intersection x, y, nm, xcrnt, ycrnt, tr, -1
-      lc1ø = atan2 lc1y-ycrnt, lc1x-xcrnt
+      lc1x, lc1y = find_intersection(x, y, nm, cx, cy, tr, -1)
+      lc1ø = atan2 lc1y-cy, lc1x-cx
 
       # left child from crnt node
-      lc2x, lc2y = find_intersection x, y, nm, xleft, yleft, tr,  1
-      lc2ø = atan2 lc2y-yleft, lc2x-xleft
+      lc2x, lc2y = find_intersection(x, y, nm, lx, ly, tr,  1)
+      lc2ø = atan2 lc2y-ly, lc2x-lx
 
-
-      # lower intersection
-      x, y = xcrnt-∆nx, ycrnt+∆nx/m
-      nm = (yleft+∆nx/m-y) / (xleft-∆nx-x)
+      # -- lower intersection --
+      x, y = cx-∆nx, cy+∆nx/m
+      nm = (ly+∆nx/m-y) / (lx-∆nx-x)
 
       # left child to crnt node
-      lc3x, lc3y = find_intersection(x, y, nm, xleft, yleft, tr, 1)
-      lc3ø = atan2 lc3y-yleft, lc3x-xleft
+      lc3x, lc3y = find_intersection(x, y, nm, lx, ly, tr, 1)
+      lc3ø = atan2 lc3y-ly, lc3x-lx
 
       # crnt node from left child
-      lc4x, lc4y = find_intersection(x, y, nm, xcrnt, ycrnt, tr, -1)
-      lc4ø = atan2 lc4y-ycrnt, lc4x-xcrnt
+      lc4x, lc4y = find_intersection(x, y, nm, cx, cy, tr, -1)
+      lc4ø = atan2 lc4y-cy, lc4x-cx
     end.call
 
 
@@ -102,37 +98,36 @@ class Traverser2
     rc4ø = :calculated_below
 
     lambda do
-      xcrnt, ycrnt = xy
-      xleft, yleft = rxy
+      cx, cy = xy
+      rx, ry = rxy
+      tr     = margin+radius                            # trace radius
+      m      = (ry-cy).to_f / (rx-cx)                   # slope
+      ∆nx    = -sqrt((margin**2) * (m**2) / (m**2 + 1)) # normal
 
-      tr  = margin+radius                            # trace radius
-      m   = (yleft-ycrnt).to_f / (xleft-xcrnt)       # slope
-      ∆nx = -sqrt((margin**2) * (m**2) / (m**2 + 1)) # normal
-
-      # upper intersection
-      x, y = xcrnt+∆nx, ycrnt-∆nx/m
-      nm = (yleft-∆nx/m-y) / (xleft+∆nx-x)
+      # -- upper intersection --
+      x, y = cx+∆nx, cy-∆nx/m
+      nm = (ry-∆nx/m-y) / (rx+∆nx-x)
 
       # crnt node to left child
-      rc1x, rc1y = find_intersection(x, y, nm, xcrnt, ycrnt, tr, 1)
-      rc1ø = atan2 rc1y-ycrnt, rc1x-xcrnt
+      rc1x, rc1y = find_intersection(x, y, nm, cx, cy, tr, 1)
+      rc1ø = atan2 rc1y-cy, rc1x-cx
 
       # left child from crnt node
-      rc2x, rc2y = find_intersection(x, y, nm, xleft, yleft, tr, -1)
-      rc2ø = atan2 rc2y-yleft, rc2x-xleft
+      rc2x, rc2y = find_intersection(x, y, nm, rx, ry, tr, -1)
+      rc2ø = atan2 rc2y-ry, rc2x-rx
 
 
-      # lower intersection
-      x, y = xcrnt-∆nx, ycrnt+∆nx/m
-      nm = (yleft+∆nx/m-y) / (xleft-∆nx-x)
+      # -- lower intersection --
+      x, y = cx-∆nx, cy+∆nx/m
+      nm = (ry+∆nx/m-y) / (rx-∆nx-x)
 
       # left child to crnt node
-      rc3x, rc3y = find_intersection(x, y, nm, xleft, yleft, tr, -1)
-      rc3ø = atan2 rc3y-yleft, rc3x-xleft
+      rc3x, rc3y = find_intersection(x, y, nm, rx, ry, tr, -1)
+      rc3ø = atan2 rc3y-ry, rc3x-rx
 
       # crnt node from left child
-      rc4x, rc4y = find_intersection(x, y, nm, xcrnt, ycrnt, tr, 1)
-      rc4ø = atan2 rc4y-ycrnt, rc4x-xcrnt
+      rc4x, rc4y = find_intersection(x, y, nm, cx, cy, tr, 1)
+      rc4ø = atan2 rc4y-cy, rc4x-cx
     end.call
 
 
@@ -253,9 +248,9 @@ class Traverser2
 
   def node_arc(x, y, startø, stopø, margin, &block)
     return to_enum(:node_arc, x, y, startø, stopø, margin) unless block
-    startø %= (2*PI)
-    stopø  %= (2*PI)
-    stopø  += (2*PI) if stopø == 0
+    startø %= 2*PI
+    stopø  %= 2*PI
+    stopø  += 2*PI if stopø == 0
     return if stopø < startø
     r  = radius + margin
     ∆ø = segment_size.to_f / r
