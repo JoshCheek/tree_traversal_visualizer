@@ -5,8 +5,9 @@ class TraverseTree < Graphics::Simulation
     super w, h, 31
     @tree              = tree
     @radius            = radius
-    @node_font         = find_font "Arial Bold", 32
-    @annotation_font   = find_font "Arial Bold", 16
+    @big_node_font     = find_font "Arial Bold", 32
+    @small_node_font   = find_font "Arial Bold", 16
+    @annotation_font   = find_font "Arial",      16
 
     register_color :leaf, 0x22, 0x66, 0x11, 0x00
     register_color :node, 0x88, 0x44, 0x11, 0x00
@@ -21,22 +22,19 @@ class TraverseTree < Graphics::Simulation
     add['K2', '2', "In-order",   :in]
     add['K3', '3', "Post-order", :post]
 
-    # just to make it faster to iterate
-    set_traversal :pre
+    set_traversal :pre # traverse immediately (reduces pain when iterating)
   end
 
   def draw(n)
     clear
-    display_keys
-    draw_tree @tree
-    display_seen @annotation_font, @traverser&.step
+    display_keys @keys, @annotation_font
+    draw_tree @tree, @radius, @big_node_font
+    display_seen @small_node_font, @traverser&.step
     sleep 0.05
   end
 
   def set_traversal(order)
-    @keys.each do |keydef|
-      keydef[-1] = (keydef[-2] == order ? :green : :white )
-    end
+    @keys.each { |k| k[-1] = (k[-2] == order ? :green : :white ) }
     @traverser = Traverser.new(
       canvas: self,
       order:  order,
@@ -63,8 +61,7 @@ class TraverseTree < Graphics::Simulation
     end
   end
 
-  def display_keys
-    font    = @annotation_font
+  def display_keys(keys, font)
     row_h   = font.height+5
     x, y    = 10, h-10
     display = lambda do |str, underline, color|
@@ -76,15 +73,15 @@ class TraverseTree < Graphics::Simulation
       end
     end
     display["Keys", true, :white]
-    @keys.map { |key, desc, _, color| display["#{key}: #{desc}", false, color] }
+    keys.map { |key, desc, _, color| display["#{key}: #{desc}", false, color] }
     display["q: quit", false, :white]
   end
 
-  def draw_tree(tree)
+  def draw_tree(tree, radius, font)
     traverse_tree tree do |torder, node, xy, lxy, rxy|
       next unless torder == :pre
       content, left, right = node
-      draw_node content, *xy, @radius, leaf?(node)
+      draw_node content, *xy, radius, leaf?(node), font
       connect_nodes *xy, *lxy, :white if left
       connect_nodes *xy, *rxy, :white if right
     end
@@ -110,9 +107,9 @@ class TraverseTree < Graphics::Simulation
     block.call :post, tree, xy, lxy, rxy
   end
 
-  def draw_node(content, x, y, r, is_leaf)
+  def draw_node(content, x, y, r, is_leaf, font)
     circle x, y, r, fill_color(is_leaf), true
-    center_text content.to_s, x, y, :white, @node_font
+    center_text content.to_s, x, y, :white, font
   end
 
   def fill_color(is_leaf)
