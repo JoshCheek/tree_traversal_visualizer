@@ -6,9 +6,9 @@ class TraverseTree < Graphics::Simulation
     super w, h, 31
     @tree              = tree
     @radius            = radius
-    @big_node_font     = find_font "Arial Bold", 32
-    @small_node_font   = find_font "Arial Bold", 16
-    @annotation_font   = find_font "Arial",      16
+    @big_node_font     = find_font "Tahoma Bold", 32
+    @small_node_font   = find_font "Tahoma Bold", 16
+    @annotation_font   = find_font "Tahoma",      16
 
     register_color :leaf, 0x22, 0x66, 0x11, 0x00
     register_color :node, 0x88, 0x44, 0x11, 0x00
