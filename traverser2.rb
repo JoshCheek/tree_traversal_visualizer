@@ -1,5 +1,5 @@
 class Traverser2
-  include Math
+  attr_reader :path
 
   def initialize(canvas:, order:, font:, radius:, tree:)
     @canvas, @font = canvas, font
@@ -7,16 +7,18 @@ class Traverser2
     @order, @radius, @tree = order, radius, tree
     @i = 0
     @segment_size = 10
+    @margin = radius/2
+    @path = visit_nodes(@tree, PI*0.5, PI*2.5, @margin, 0, 0).to_a
   end
 
   def step
-    margin = radius/2
-    path = visit_nodes(@tree, PI*0.5, PI*2.5, margin, 0, 0).to_a
     @i += 1
-    call path, @i, margin
+    call @path, @i, @margin
   end
 
   private
+
+  include Math
 
   attr_reader :segment_size, :canvas, :order, :font, :radius, :tree
 

@@ -24,18 +24,25 @@ class TraverseTree < Graphics::Simulation
     add['K2', '2', "In-order",   :in]
     add['K3', '3', "Post-order", :post]
 
-    set_traversal :pre # traverse immediately (reduces pain when iterating)
+    @path = build_traverser(nil)
+              .path
+              .select { |order, *| order == :pre }
+              .map(&:last)
   end
 
   def draw(n)
     clear
     display_keys @keys, @annotation_font
-    draw_tree @tree, @radius, @big_node_font
+    draw_tree @path, @radius, @big_node_font
     display_seen @small_node_font, @traverser&.step
   end
 
   def set_traversal(order)
     @keys.each { |k| k[-1] = (k[-2] == order ? :green : :white ) }
+    @traverser = build_traverser order
+  end
+
+  def build_traverser(order)
     @traverser = Traverser2.new(
       canvas: self,
       order:  order,
@@ -43,10 +50,6 @@ class TraverseTree < Graphics::Simulation
       radius: @radius,
       tree:   @tree,
     )
-  end
-
-  def visit_nodes(tree, &block)
-    VisitNodes.new(tree, 0, 0, w, h, @radius, &block).call
   end
 
   def display_seen(font, seen)
@@ -82,9 +85,8 @@ class TraverseTree < Graphics::Simulation
     display["q: quit", false, :white]
   end
 
-  def draw_tree(tree, radius, font)
-    visit_nodes tree do |torder, node, xy, lxy, rxy|
-      next unless torder == :pre
+  def draw_tree(path, radius, font)
+    path.each do |node, xy, lxy, rxy|
       content, left, right = node
       circle *xy, radius, fill_color(leaf?(node)), true
       center_text content.to_s, *xy, :white, font
@@ -119,114 +121,6 @@ class TraverseTree < Graphics::Simulation
   def leaf?(tree)
     content, left, right = tree
     !left && !right
-  end
-end
-
-
-class VisitNodes
-  def initialize(tree, col, row, w, h, radius, &block)
-    @tree, @col, @row, @block = tree, col, row, block
-    @w, @h, @radius = w, h, radius
-  end
-
-  def call
-    traverse_tree @tree, @col, @row, &@block
-  end
-
-  private
-
-  def traverse_tree(tree, col, row, &block)
-    return to_enum(__method__, tree, col, row) unless block
-    lcol = col*2   # left  child column
-    rcol = col*2+1 # right child column
-    crow = row+1   # child row
-
-    # calculate child locations so we can pass to block before traversing children
-    content, left, right = tree
-    xy  = center_for  col,  row
-    lxy = center_for lcol, crow if left
-    rxy = center_for rcol, crow if right
-
-    # the actual traversal
-    block.call :pre,  tree, xy, lxy, rxy
-    traverse_tree left,  lcol, crow, &block if left
-    block.call :in,   tree, xy, lxy, rxy
-    traverse_tree right, rcol, crow, &block if right
-    block.call :post, tree, xy, lxy, rxy
-  end
-
-  def center_for(col, row)
-    col_margin = 50
-    row_margin = 50
-    num_cols   = 2**row
-    col_width  = (@w - 2*col_margin) / num_cols
-    x = col*col_width + col_width/2 + col_margin
-    y = @h - (row+1)*(row_margin + 2*@radius)
-    [x, y]
-  end
-end
-
-
-class Traverser
-  attr_reader :canvas, :order, :path, :font, :radius
-  def initialize(canvas:, order:, path:, font:, radius:)
-    @canvas, @order, @path, @font, @radius = canvas, order, path, font, radius
-    @i = 0
-  end
-
-  def step
-    @i += 1
-    call @i
-  end
-
-  def call(i)
-    line_offset   = radius+10
-    marker_offset = radius-3
-    px = py       = nil
-    seen          = []
-    deferred      = []
-    path.take(i).each do |crnt_order, tree, xy, *|
-      cx, cy = xy
-      case crnt_order
-      when :pre  then cx -= line_offset
-      when :in   then cy -= line_offset
-      when :post then cx += line_offset
-      else raise "wat: #{crnt_order.inspect}"
-      end
-      canvas.line px, py, cx, cy, :green if px
-      px, py = cx, cy
-
-      next unless order == crnt_order
-      seen << tree
-
-      str        = seen.size.to_s
-      strw, strh = canvas.text_size str, font
-      strx, stry = xy
-      case order
-      when :pre
-        strx -= marker_offset
-        strx -= strw
-        stry -= strh/2
-      when :in
-        stry -= marker_offset
-        strx -= strw/2
-        stry -= strh
-      when :post
-        strx += marker_offset
-        stry -= strh/2
-      else raise "wat: #{order.inspect}"
-      end
-      deferred << lambda do
-        circlex = strx+strw/2
-        circley = stry+strh/2
-        circler = font.height*0.65
-        canvas.circle circlex, circley, circler, :red, true
-        # canvas.circle circlex, circley, circler, :white, false
-        canvas.text str, strx, stry, :white, font
-      end
-    end
-    deferred.each &:call
-    seen
   end
 end
 
