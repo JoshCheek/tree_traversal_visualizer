@@ -1,4 +1,5 @@
 require 'graphics'
+require_relative 'traverser2'
 
 class TraverseTree < Graphics::Simulation
   def initialize(tree, radius, w, h)
@@ -35,12 +36,12 @@ class TraverseTree < Graphics::Simulation
 
   def set_traversal(order)
     @keys.each { |k| k[-1] = (k[-2] == order ? :green : :white ) }
-    @traverser = Traverser.new(
+    @traverser = Traverser2.new(
       canvas: self,
       order:  order,
-      path:   visit_nodes(@tree).to_a,
       font:   @annotation_font,
       radius: @radius,
+      tree:   @tree,
     )
   end
 
