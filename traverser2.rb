@@ -43,9 +43,32 @@ class Traverser2
     inø      = 3*PI/2
     postø    = 2*PI
     lcstartø = "??"
+    lambda do
       # consider the line from left child to crnt
-      # now
-      # goes through the trace radius around crnt
+      # now give it a stroke of 1 margin on each side
+      # wherever the line of its margin goes through
+      # the trace radius of the circle, that is our lcstartø
+      xcrnt, ycrnt = xy
+      xleft, yleft = lxy
+
+      # trace radius
+      tr = margin+radius
+
+      # slope
+      m   = (yleft-ycrnt).to_f / (xleft-xcrnt)
+
+      # normal
+      ∆nx = -sqrt((margin**2) * (m**2) / (m**2 + 1))
+
+      # upper line
+      ux1, uy1 = xcrnt+∆nx, ycrnt-∆nx/m
+      ux2, uy2 = xleft+∆nx, yleft-∆nx/m
+
+      # upper intersections
+      nm = (uy2-uy1) / (ux2-ux1)
+      canvas.circle *find_intersection(ux1, uy1, nm, xcrnt, ycrnt, tr, -1), 5, :red, true
+      canvas.circle *find_intersection(ux1, uy1, nm, xleft, yleft, tr,  1), 5, :red, true
+    end.call
 
     # trace from entry to pre
     block.call :enter, tree, xy, entryø, exitø
@@ -98,6 +121,21 @@ class Traverser2
     # block.call :in,   [tree, xy, lxy, rxy]
     visit_nodes right, idk1ø, idk2ø, margin, rcol, crow, &block if right
     # block.call :post, [tree, xy, lxy, rxy]
+  end
+
+  def find_intersection(lx, ly, m, cx, cy, r, dir)
+    qa = m*m+1
+    qb = 2*(ly*m -lx*m*m - cy*m - cx)
+    qc = lx*lx*m*m + -2*lx*ly*m + 2*lx*cy*m +
+         ly*ly + -2*ly*cy +
+         cy*cy + cx*cx - r*r
+    x = quadratic(qa, qb, qc, dir)
+    y = (x-lx)*m + ly
+    [x, y]
+  end
+
+  def quadratic(a, b, c, dir)
+    (-b + dir*sqrt(b**2 - 4*a*c)) / 2 / a
   end
 
   def node_pos(col, row)
