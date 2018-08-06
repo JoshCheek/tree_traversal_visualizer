@@ -6,7 +6,7 @@ class Traverser2
     @w, @h = canvas.w, canvas.h
     @order, @radius, @tree = order, radius, tree
     @i = 0
-    @segment_size = 10
+    @segment_size = 2
   end
 
   def step
@@ -265,6 +265,24 @@ class Traverser2
     []
   end
 
+  def path_arc(x1, y1, x2, y2, &block)
+    return to_enum(:path_arc, x1, y1, x2, y2) unless block
+    m  = (y2-y1)/(x2-x1)
+    ∆x = sqrt (segment_size**2)/(1+m**2)
+    ∆x *= -1 if x2 < x1
+    x  = x1+∆x
+    y  = y1+∆x*m
+    expected_magnitude = (x2-x1).abs
+    crnt_magnitude     = ∆x
+    while crnt_magnitude.abs < expected_magnitude
+      block.call x-∆x, y-∆x*m, x, y
+      crnt_magnitude += ∆x
+      x += ∆x
+      y += ∆x*m
+    end
+    block.call x-∆x, y-∆x*m, x2, y2
+  end
+
   def node_arc(x, y, startø, stopø, margin, &block)
     return to_enum(:node_arc, x, y, startø, stopø, margin) unless block
     startø %= (2*PI)
@@ -289,23 +307,4 @@ class Traverser2
   def angle_to_xy(x, y, r, ø)
     [x+r*Math.cos(ø), y+r*Math.sin(ø)]
   end
-
-  # this is fkn wrong, it doesn't jump by segment_size,
-  # but I just don't have it in me to figure that fucking shit out right now
-  def path_arc(x1, y1, x2, y2, &block)
-    return to_enum(:path_arc, x1, y1, x2, y2) unless block
-    expected_magnitude = (x2-x1).abs
-    crnt_magnitude     = 0
-    m  = (y2-y1)/(x2-x1)
-    x  = x1
-    y  = y1
-    ∆x = (x2-x1)/10
-    while crnt_magnitude.abs < expected_magnitude
-      block.call x, y, x+∆x, y+∆x*m
-      crnt_magnitude += ∆x
-      x += ∆x
-      y += ∆x*m
-    end
-  end
-
 end
