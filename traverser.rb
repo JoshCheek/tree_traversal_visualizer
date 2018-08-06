@@ -5,9 +5,9 @@ class Traverser
     @canvas, @font = canvas, font
     @w, @h = canvas.w, canvas.h
     @order, @radius, @tree = order, radius, tree
-    @gait = gait
-    @margin = radius/2
+    @gait, @margin = gait, radius/3
     @path = visit_nodes(@tree, PI*0.5, PI*2.5, @margin, 0, 0).to_a
+    @max  = @path.count { |type, *| type == :line }
   end
 
   def step
@@ -198,35 +198,54 @@ class Traverser
   end
 
   def call(path, stop_at, margin)
+    annotation_radius = radius #+ margin/2
+    circler  = font.height*0.65
     deferred = []
     seen     = []
     i        = 0
+    lastx = lasty = nil
 
     path.each do |type, vars|
       case type
       when :line
+        next if stop_at <= i
         i += 1
-        canvas.line *vars, :annotation
+        x1, y1, x2, y2 = vars
+        canvas.line x1,   y1,   x2,   y2,   :annotation
+        canvas.line x1-1, y1,   x2-1, y2,   :annotation
+        canvas.line x1,   y1-1, x2,   y2-1, :annotation
+        lastx, lasty = x2, y2
       when order
-        i += 1
         tree, (circlex, circley), * = vars
+        case order
+        when :pre  then circlex = circlex - annotation_radius
+        when :in   then circley = circley - annotation_radius
+        when :post then circlex = circlex + annotation_radius
+        end
+        deferred << lambda do
+          canvas.circle circlex, circley, circler, :annotation, true
+        end
+        next if stop_at <= i
         seen << tree
         str        = seen.size.to_s
         strw, strh = canvas.text_size str, font
-        case type
-        when :pre  then circlex = circlex - radius - margin/2
-        when :in   then circley = circley - radius - margin/2
-        when :post then circlex = circlex + radius + margin/2
-        end
         deferred << lambda do
-          circler = font.height*0.65
           canvas.circle circlex, circley, circler, :annotation, true
+          canvas.circle circlex, circley, circler, :white, false
           canvas.text str, circlex-strw/2, circley-strh/2, :white, font
         end
       end
-      break if stop_at <= i
     end
+
     deferred.each &:call
+
+    lastx && stop_at < @max && begin
+      str = (seen.size+1).to_s
+      strw, strh = canvas.text_size str, font
+      canvas.circle(lastx, lasty, circler, :white, false)
+      canvas.text str, lastx-strw/2, lasty-strh/2, :white, font
+    end
+
     seen
   end
 
