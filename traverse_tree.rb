@@ -39,7 +39,7 @@ class TraverseTree < Graphics::Simulation
     @traverser = Traverser.new(
       canvas: self,
       order:  order,
-      path:   build_traversal(@tree),
+      path:   traverse_tree(@tree).to_a,
       font:   @instructions_font,
       radius: @radius,
     )
@@ -48,19 +48,19 @@ class TraverseTree < Graphics::Simulation
   def display_seen(seen)
     font    = @instructions_font
     x, y    = 10, 10
-    w, h    = 0,  0
-    display = lambda do |str, color|
-      text str, x, y, color, font
+    radius  = font.height
+    label = "Seen: "
+    text label, x, y, :white, font
+    x += text_size(label, font)[0]
+    seen.each_with_index do |tree, index|
+      bg_color = fill_color leaf?(tree)
+      content, * = tree
+      str = content.to_s
       w, h = text_size str, font
-      x += w
-    end
-    display["Seen: ", :white]
-    seen.each_with_index do |content, index|
-      is_last = (index == seen.size.pred)
-      color   = :green
-      display["    ", color]
-      display[content.to_s, color]
-      circle x-w/2, y+h/2, font.height, color if is_last
+      x += radius
+      circle x+w/2, y+h/2, radius, bg_color, true
+      text str, x, y, :white, font
+      x += w+radius
     end
   end
 
@@ -79,17 +79,6 @@ class TraverseTree < Graphics::Simulation
     display["Keys", true, :white]
     @keys.map { |key, desc, _, color| display["#{key}: #{desc}", false, color] }
     display["q: quit", false, :white]
-  end
-
-  def build_traversal(tree)
-    traverse_tree(tree).each_with_object([]) do |(torder, node, xy, *), traversal|
-      traversal << {
-        position: torder,
-        content:  node[0],
-        x:        xy[0],
-        y:        xy[1],
-      }
-    end
   end
 
   def draw_traversal(tree)
@@ -201,25 +190,22 @@ class Traverser
   end
 
   def call(i)
-    nodenum = 0
     offset  = radius+15
     px = py = nil
     seen    = []
-    path.take(i).each do |crnt| # {:position=>:pre, :content=>:*, :x=>500, :y=>490},
-      cx, cy = crnt[:x], crnt[:y]
-      case crnt[:position]
+    path.take(i).each do |crnt_order, tree, (cx, cy), *|
+      case crnt_order
       when :pre  then cx -= offset
       when :in   then cy -= offset
       when :post then cx += offset
-      else raise "wat: #{torder.inspect}"
+      else raise "wat: #{crnt_order.inspect}"
       end
       canvas.line px, py, cx, cy, :green if px
       px, py = cx, cy
 
-      next unless order == crnt[:position]
-      seen << crnt[:content]
-      nodenum += 1
-      str        = nodenum.to_s
+      next unless order == crnt_order
+      seen << tree
+      str        = seen.size.to_s
       strw, strh = canvas.text_size str, font
       strx, stry = cx, cy
       case order
