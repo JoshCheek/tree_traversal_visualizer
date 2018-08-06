@@ -6,50 +6,60 @@ class Traverser2
     @w, @h = canvas.w, canvas.h
     @order, @radius, @tree = order, radius, tree
     @i = 0
+    @segment_size = 10
   end
 
   def step
-    trace_radius = 1.5*radius
-    segment_size  = 10
-    path = visit_nodes(@tree, PI*0.5, PI*2.5, trace_radius, segment_size, 0, 0).to_a
+    margin = radius/2
+    path = visit_nodes(@tree, PI*0.5, PI*2.5, margin, 0, 0).to_a
     @i += 1
-    call path.take(@i), trace_radius
+    call path.take(@i), radius+margin
   end
 
   private
 
   PI = Math::PI
   attr_reader :canvas, :order, :font, :radius, :tree
+  attr_reader :segment_size
 
 
-  def visit_nodes(tree, entryø, exitø, trace_radius, segment_size, col, row, &block)
-    return to_enum(__method__, tree, entryø, exitø, trace_radius, segment_size, col, row) unless block
+  def visit_nodes(tree, entryø, exitø, margin, col, row, &block)
+    return to_enum(__method__, tree, entryø, exitø, margin, col, row) unless block
 
-    preø  = PI
-    inø   = 3*PI/2
-    postø = 2*PI
+    content, left, right = tree
 
+    # child cols / rows
     lcol = col*2   # left  child column
     rcol = col*2+1 # right child column
     crow = row+1   # child row
 
-    # calculate child locations so we can pass to block before traversing children
-    content, left, right = tree
+    # coords
     xy  = node_pos  col,  row
-    lxy = node_pos lcol, crow if left
-    rxy = node_pos rcol, crow if right
+    lxy = node_pos lcol, crow
+    rxy = node_pos rcol, crow
 
-    # the actual tracing traversal
+    # relevant angles
+    preø     = PI
+    inø      = 3*PI/2
+    postø    = 2*PI
+    lcstartø = "??"
+      # consider the line from left child to crnt
+      # now
+      # goes through the trace radius around crnt
+
+    # trace from entry to pre
     block.call :enter, tree, xy, entryø, exitø
-
-    node_arc *xy, entryø, preø, trace_radius, segment_size  do |x1, y1, x2, y2|
+    node_arc *xy, entryø, preø, margin  do |x1, y1, x2, y2|
       block.call :line, [x1, y1, x2, y2]
     end
 
+    # emit pre
     block.call :pre, [tree, xy, lxy, rxy]
 
-#   for each line segment from 90 to lcstart
-#     emit :line
+    # trace from pre to lcstart
+    # node_arc *xy, preø, lcstartø, margin  do |x1, y1, x2, y2|
+    #   block.call :line, [x1, y1, x2, y2]
+    # end
 
 #   if there is a left child
 #     emit :exit
@@ -84,9 +94,9 @@ class Traverser2
     idk1ø = PI/2 + 0.5
     idk2ø = PI/2 - 0.5
 
-    visit_nodes left,  idk1ø, idk2ø, trace_radius, segment_size, lcol, crow, &block if left
+    visit_nodes left,  idk1ø, idk2ø, margin, lcol, crow, &block if left
     # block.call :in,   [tree, xy, lxy, rxy]
-    visit_nodes right, idk1ø, idk2ø, trace_radius, segment_size, rcol, crow, &block if right
+    visit_nodes right, idk1ø, idk2ø, margin, rcol, crow, &block if right
     # block.call :post, [tree, xy, lxy, rxy]
   end
 
@@ -140,9 +150,10 @@ class Traverser2
     []
   end
 
-  def node_arc(x, y, startø, stopø, r, segment_size, &block)
-    return to_enum(:node_arc, x, y, startø, stopø, r, segment_size) unless block
+  def node_arc(x, y, startø, stopø, margin, &block)
+    return to_enum(:node_arc, x, y, startø, stopø, margin) unless block
     raise "bad angles" if stopø < startø
+    r  = radius + margin
     ∆ø = segment_size.to_f / r
     prevø = startø
     crntø = prevø + ∆ø
