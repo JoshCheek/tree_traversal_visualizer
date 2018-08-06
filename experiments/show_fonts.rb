@@ -9,20 +9,23 @@ class ShowFonts < Graphics::Simulation
       Phosphate PingFang PlantagenetCherokee Raanana Rockwell Sana Sathu Seravek
       Shree714 SignPainter Silom Skia Symbol Tahoma Times Verdana
     ]
-    @crnt = 0
   end
 
   def draw(n)
     clear :black
+    x = 50
+    y = h-50
 
-    str = "Keys: 1 (Pre-order Traversal), 2 (In-order Traversal), 3 (Post-order Traversal)"
-    font_name = @fonts[@crnt]
-    font = find_font font_name, 20
-    text "Default", 100, 200, :white
-    text str,       100, 150, :white
-
-    text font_name, 100, 400, :white, font
-    text str,       100, 350, :white, font
+    @fonts.each do |name|
+      font = find_font name, 20
+      y -= font.height
+      text name, x, y, :white, font
+      y -= 5
+      if y < 50
+        x += 200
+        y = h-50
+      end
+    end
   end
 end
 
