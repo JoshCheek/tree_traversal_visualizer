@@ -57,11 +57,15 @@ To run the code
 ---------------
 
 You'll need [Ryan Davis](https://twitter.com/the_zenspider)'s
-[Graphics](https://github.com/zenspider/graphics) library.
-
-[Here](http://rayhightower.com/blog/2017/02/15/animated-graphics-in-ruby/)
+[Graphics](https://github.com/zenspider/graphics) library. [Here](http://rayhightower.com/blog/2017/02/15/animated-graphics-in-ruby/)
 are some nice installation instructions by
 [Ray Hightower](https://twitter.com/RayHightower).
+
+Once you have that:
+
+```sh
+$ rsdl traverse_tree.rb
+```
 
 
 License
