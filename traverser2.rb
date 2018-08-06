@@ -139,62 +139,42 @@ class Traverser2
       rc4ø = atan2 rc4y-ycrnt, rc4x-xcrnt
     end.call
 
+    emit_line = lambda do |x1, y1, x2, y2|
+      block.call :line, [x1, y1, x2, y2]
+    end
+
     # entry -> pre -> left child
-    node_arc *xy, entryø, preø, margin  do |x1, y1, x2, y2|
-      block.call :line, [x1, y1, x2, y2]
-    end
+    node_arc *xy, entryø, preø, margin, &emit_line
     block.call :pre, [tree, xy, lxy, rxy]
-    node_arc *xy, preø, lc1ø, margin  do |x1, y1, x2, y2|
-      block.call :line, [x1, y1, x2, y2]
-    end
+    node_arc *xy, preø, lc1ø, margin, &emit_line
 
     # left child
     if left
-      path_arc lc1x, lc1y, lc2x, lc2y do |x1, y1, x2, y2|
-        block.call :line, [x1, y1, x2, y2]
-      end
+      path_arc lc1x, lc1y, lc2x, lc2y, &emit_line
       visit_nodes left, lc2ø, lc3ø, margin, lcol, crow, &block if left
-      path_arc lc3x, lc3y, lc4x, lc4y do |x1, y1, x2, y2|
-        block.call :line, [x1, y1, x2, y2]
-      end
+      path_arc lc3x, lc3y, lc4x, lc4y, &emit_line
     else
-      node_arc *xy, lc1ø, lc4ø, margin do |x1, y1, x2, y2|
-        block.call :line, [x1, y1, x2, y2]
-      end
+      node_arc *xy, lc1ø, lc4ø, margin, &emit_line
     end
 
     # left child -> infix -> right child
-    node_arc *xy, lc4ø, inø, margin do |x1, y1, x2, y2|
-      block.call :line, [x1, y1, x2, y2]
-    end
+    node_arc *xy, lc4ø, inø, margin, &emit_line
     block.call :in, [tree, xy, lxy, rxy]
-    node_arc *xy, inø, rc1ø, margin do |x1, y1, x2, y2|
-      block.call :line, [x1, y1, x2, y2]
-    end
+    node_arc *xy, inø, rc1ø, margin, &emit_line
 
     # right child
     if right
-      path_arc rc1x, rc1y, rc2x, rc2y do |x1, y1, x2, y2|
-        block.call :line, [x1, y1, x2, y2]
-      end
+      path_arc rc1x, rc1y, rc2x, rc2y, &emit_line
       visit_nodes right, rc2ø, rc3ø, margin, rcol, crow, &block if right
-      path_arc rc3x, rc3y, rc4x, rc4y do |x1, y1, x2, y2|
-        block.call :line, [x1, y1, x2, y2]
-      end
+      path_arc rc3x, rc3y, rc4x, rc4y, &emit_line
     else
-      node_arc *xy, rc1ø, rc4ø, margin do |x1, y1, x2, y2|
-        block.call :line, [x1, y1, x2, y2]
-      end
+      node_arc *xy, rc1ø, rc4ø, margin, &emit_line
     end
 
     # right child -> post -> exit
-    node_arc *xy, rc4ø, postø, margin  do |x1, y1, x2, y2|
-      block.call :line, [x1, y1, x2, y2]
-    end
+    node_arc *xy, rc4ø, postø, margin, &emit_line
     block.call :post, [tree, xy, lxy, rxy]
-    node_arc *xy, postø, exitø, margin  do |x1, y1, x2, y2|
-      block.call :line, [x1, y1, x2, y2]
-    end
+    node_arc *xy, postø, exitø, margin, &emit_line
   end
 
   def find_intersection(lx, ly, m, cx, cy, r, dir)
