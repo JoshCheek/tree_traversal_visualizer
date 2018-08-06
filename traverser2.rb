@@ -37,17 +37,19 @@ class Traverser2
     xy  = node_pos  col,  row
     lxy = node_pos lcol, crow
     rxy = node_pos rcol, crow
-    lc1x = lc1y = :figure_me_out!
-    lc2x = lc2y = :figure_me_out!
+    lc1x = lc1y = :calculated_below
+    lc2x = lc2y = :calculated_below
+    lc3x = lc3y = :calculated_below
+    lc4x = lc4y = :calculated_below
 
     # relevant angles
     preø     = PI
     inø      = 3*PI/2
     postø    = 2*PI
-    lc1ø     = "??"
-    lc2ø     = "??"
-    lc3ø     = "??"
-    lc4ø     = "??"
+    lc1ø     = :calculated_below
+    lc2ø     = :calculated_below
+    lc3ø     = :calculated_below
+    lc4ø     = :calculated_below
     lambda do
       # consider the line from left child to crnt
       # now give it a stroke of 1 margin on each side
@@ -65,34 +67,28 @@ class Traverser2
       # normal
       ∆nx = -sqrt((margin**2) * (m**2) / (m**2 + 1))
 
-      # upper line
+      # upper intersection
       ux1, uy1 = xcrnt+∆nx, ycrnt-∆nx/m
       ux2, uy2 = xleft+∆nx, yleft-∆nx/m
-
-      # upper intersections
       nm = (uy2-uy1) / (ux2-ux1)
-
-      # use these to figure otu lc1ø
+      # crnt node to left child
       lc1x, lc1y = find_intersection(ux1, uy1, nm, xcrnt, ycrnt, tr, -1)
       lc1ø = atan2 lc1y-ycrnt, lc1x-xcrnt
-
-      # canvas.line(
-      #   xcrnt, ycrnt,
-      #   xcrnt+cos(lc1ø)*100,
-      #   ycrnt+sin(lc1ø)*100,
-      #   :red
-      # )
-
-      # use these to figure otu lc2ø
+      # left child from crnt node
       lc2x, lc2y = find_intersection(ux1, uy1, nm, xleft, yleft, tr,  1)
       lc2ø = atan2 lc2y-yleft, lc2x-xleft
 
-      # canvas.line(
-      #   xleft, yleft,
-      #   xleft+cos(lc2ø)*100,
-      #   yleft+sin(lc2ø)*100,
-      #   :red
-      # )
+
+      # lower intersection
+      ux1, uy1 = xcrnt-∆nx, ycrnt+∆nx/m
+      ux2, uy2 = xleft-∆nx, yleft+∆nx/m
+      nm = (uy2-uy1) / (ux2-ux1)
+      # left child to crnt node
+      lc3x, lc3y = find_intersection(ux1, uy1, nm, xleft, yleft, tr, 1)
+      lc3ø = atan2 lc3y-yleft, lc3x-xleft
+      # crnt node from left child
+      lc4x, lc4y = find_intersection(ux1, uy1, nm, xcrnt, ycrnt, tr, -1)
+      lc4ø = atan2 lc4y-ycrnt, lc4x-xcrnt
     end.call
 
     # trace from entry to pre
@@ -116,11 +112,15 @@ class Traverser2
       path_arc lc1x, lc1y, lc2x, lc2y do |x1, y1, x2, y2|
         block.call :line, [x1, y1, x2, y2]
       end
-    end
-#     visit left child
+      visit_nodes left, lc2ø, lc3ø, margin, lcol, crow, &block if left
+      path_arc lc3x, lc3y, lc4x, lc4y do |x1, y1, x2, y2|
+        block.call :line, [x1, y1, x2, y2]
+      end
+
 #     for each line segment along the connection coming back
 #       emit :line
 #     emit :enter
+    end
 #   else
 #     for each line segment from lcstart to lcend
 #       emit :line
@@ -146,7 +146,6 @@ class Traverser2
     idk1ø = PI/2 + 0.5
     idk2ø = PI/2 - 0.5
 
-    visit_nodes left,  idk1ø, idk2ø, margin, lcol, crow, &block if left
     # block.call :in,   [tree, xy, lxy, rxy]
     visit_nodes right, idk1ø, idk2ø, margin, rcol, crow, &block if right
     # block.call :post, [tree, xy, lxy, rxy]
