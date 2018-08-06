@@ -1,5 +1,5 @@
 require 'graphics'
-require_relative 'traverser2'
+require_relative 'traverser'
 
 class TraverseTree < Graphics::Simulation
   def initialize(tree, radius, w, h)
@@ -14,10 +14,9 @@ class TraverseTree < Graphics::Simulation
     register_color :node,       0x88, 0x44, 0x11, 0x00
     register_color :annotation, 0x88, 0x22, 0x22, 0x00
 
-    @keys = []
+    @keydefs = []
     add = lambda do |key_id, slug, desc, order|
-      keydef = [slug, desc, order, :white]
-      @keys << keydef
+      @keydefs << [slug, desc, order, :white]
       add_key_handler(key_id) { set_traversal order }
     end
     add['K1', '1', "Pre-order",  :pre]
@@ -28,34 +27,45 @@ class TraverseTree < Graphics::Simulation
               .path
               .select { |order, *| order == :pre }
               .map(&:last)
+
+    @started = false
+    @label   = ""
   end
 
   def draw(n)
     clear
-    display_keys @keys, @annotation_font
+    display_keys @keydefs, @annotation_font
     draw_tree @path, @radius, @big_node_font
-    display_seen @small_node_font, @traverser&.step
+    display_seen @small_node_font, @label, @traverser&.step if @started
   end
 
   def set_traversal(order)
-    @keys.each { |k| k[-1] = (k[-2] == order ? :green : :white ) }
+    @keydefs.each do |k|
+      if k[-2] == order
+        k[-1]  = :green
+        @label = k[1] + ": "
+      else
+        k[-1] = :white
+      end
+    end
     @traverser = build_traverser order
+    @started   = true
   end
 
   def build_traverser(order)
-    @traverser = Traverser2.new(
-      canvas: self,
-      order:  order,
-      font:   @annotation_font,
-      radius: @radius,
-      tree:   @tree,
+    @traverser = Traverser.new(
+      canvas:       self,
+      order:        order,
+      font:         @annotation_font,
+      radius:       @radius,
+      tree:         @tree,
+      segment_size: 3,
     )
   end
 
-  def display_seen(font, seen)
+  def display_seen(font, label, seen)
     x, y   = 10, 10
     radius = font.height
-    label  = "Seen: "
     text label, x, y, :white, font
     x += text_size(label, font)[0]
     seen.each do |tree|
@@ -69,7 +79,7 @@ class TraverseTree < Graphics::Simulation
     end
   end
 
-  def display_keys(keys, font)
+  def display_keys(keydefs, font)
     row_h   = font.height+5
     x, y    = 10, h-10
     display = lambda do |str, underline, color|
@@ -81,7 +91,7 @@ class TraverseTree < Graphics::Simulation
       end
     end
     display["Keys", true, :white]
-    keys.map { |key, desc, _, color| display["#{key}: #{desc}", false, color] }
+    keydefs.map { |key, desc, _, color| display["#{key}: #{desc}", false, color] }
     display["q: quit", false, :white]
   end
 

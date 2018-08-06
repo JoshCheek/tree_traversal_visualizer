@@ -1,17 +1,17 @@
-class Traverser2
+class Traverser
   attr_reader :path
 
-  def initialize(canvas:, order:, font:, radius:, tree:)
+  def initialize(canvas:, order:, font:, radius:, tree:, segment_size:)
     @canvas, @font = canvas, font
     @w, @h = canvas.w, canvas.h
     @order, @radius, @tree = order, radius, tree
-    @i = 0
-    @segment_size = 10
+    @segment_size = segment_size
     @margin = radius/2
     @path = visit_nodes(@tree, PI*0.5, PI*2.5, @margin, 0, 0).to_a
   end
 
   def step
+    @i ||= 0
     @i += 1
     call @path, @i, @margin
   end
