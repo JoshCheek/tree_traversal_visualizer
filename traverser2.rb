@@ -238,7 +238,7 @@ class Traverser2
       break if stop_at <= i
     end
     deferred.each &:call
-    []
+    seen
   end
 
   def path_arc(x1, y1, x2, y2, &block)
