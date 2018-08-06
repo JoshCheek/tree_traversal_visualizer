@@ -13,7 +13,7 @@ class Traverser2
     margin = radius/2
     path = visit_nodes(@tree, PI*0.5, PI*2.5, margin, 0, 0).to_a
     @i += 1
-    call path, @i, radius+margin
+    call path, @i, margin
   end
 
   private
@@ -200,11 +200,10 @@ class Traverser2
     [x, y]
   end
 
-  def call(path, stop_at, trace_radius)
+  def call(path, stop_at, margin)
     deferred = []
     seen     = []
-
-    i = 0
+    i        = 0
 
     path.each do |type, vars|
       case type
@@ -215,18 +214,15 @@ class Traverser2
           seen << tree
           str        = seen.size.to_s
           strw, strh = canvas.text_size str, font
-          strx, stry = xy
+          circlex, circley = xy
 
-          strx -= trace_radius
-          strx -= strw
-          stry -= strh/2
+          circlex = circlex - radius - margin/2
+          strx    = circlex - strw/2
+          stry    = circley - strh/2
 
           deferred << lambda do
-            circlex = strx+strw/2
-            circley = stry+strh/2
             circler = font.height*0.65
             canvas.circle circlex, circley, circler, :red, true
-            # canvas.circle circlex, circley, circler, :white, false
             canvas.text str, strx, stry, :white, font
           end
         end
