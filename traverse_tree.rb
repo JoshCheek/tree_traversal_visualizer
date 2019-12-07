@@ -5,7 +5,7 @@ class TraverseTree < Graphics::Simulation
   Keydef = Struct.new :key_id, :slug, :name, :description, :order, :color
 
   def initialize(tree, w, h)
-    super w, h, 31, 'Preorder, Inorder, and Postorder Tree Traversal'
+    super w, h, 'Preorder, Inorder, and Postorder Tree Traversal'
 
     @tree              = tree
     @radius            = 30
@@ -14,9 +14,9 @@ class TraverseTree < Graphics::Simulation
     @small_node_font   = find_font "Tahoma Bold", 16
     @annotation_font   = find_font "Tahoma",      16
 
-    register_color :leaf,       0x22, 0x66, 0x11, 0x00
-    register_color :node,       0x88, 0x44, 0x11, 0x00
-    register_color :annotation, 0x88, 0x22, 0x22, 0x00
+    register_color :leaf,       0x22, 0x66, 0x11, 0xFF
+    register_color :node,       0x88, 0x44, 0x11, 0xFF
+    register_color :annotation, 0x88, 0x22, 0x22, 0xFF
 
     @keydefs = []
     add = lambda do |key_id, slug, name, order, desc|
@@ -152,8 +152,7 @@ class TraverseTree < Graphics::Simulation
   end
 
   def text_size(str, font)
-    rendered = font.render screen, str, color[:white] # color is irrelevant here
-    return rendered.w, rendered.h
+    font.text_size str
   end
 
   def leaf?(tree)
